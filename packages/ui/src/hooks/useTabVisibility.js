@@ -1,0 +1,24 @@
+import { useState, useEffect } from 'react';
+
+/**
+ * useTabVisibility Hook
+ * Returns true if the document is visible, false otherwise.
+ */
+const useTabVisibility = () => {
+    const [isVisible, setIsVisible] = useState(!document.hidden);
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            setIsVisible(!document.hidden);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
+    return isVisible;
+};
+
+export default useTabVisibility;

@@ -1,0 +1,7 @@
+[
+    {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
+    {"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "typeDisp": "Equity"},
+    {"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
+    {"symbol": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
+    {"symbol": "TSLA", "name": "Tesla, Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"}
+]

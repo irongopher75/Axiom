@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* AXIOM CORE PALETTE */
+    --bg-pure: #000000;
+    --bg-panel: #0D0D0D;
+    --panel-border: #1A1A1A;
+    --panel-border-active: #FF6600;
+
+    /* COLOR LANGUAGE - STRICT */
+    --axiom-orange: #FF6600;
+    /* Primary Actions, Buy Signals */
+    --axiom-green: #00FF41;
+    /* Positive, Matrix Green */
+    --axiom-red: #FF2244;
+    /* Negative, Sell Signals */
+    --axiom-amber: #FFCC00;
+    /* Warnings, Pending */
+    --axiom-cyan: #00CCFF;
+    /* Satellite/Geospatial */
+    --axiom-secondary: #888888;
+    /* Labels */
+
+    /* TYPOGRAPHY */
+    --font-data: 'IBM Plex Mono', monospace;
+    --font-label: 'IBM Plex Sans Condensed', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-radius: 0 !important;
+    /* No rounded corners anywhere */
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--bg-pure);
+    color: #FFFFFF;
+    font-family: var(--font-label);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* DATA RENDERING */
+.data-mono {
+    font-family: var(--font-data);
+}
+
+/* TERMINAL LAYOUT HELPERS */
+.terminal-panel {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-panel.active {
+    border-color: var(--panel-border-active);
+}
+
+/* UI COMPONENTS */
+.function-bar {
+    height: 32px;
+    background-color: var(--bg-pure);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.function-key {
+    color: var(--axiom-secondary);
+    cursor: pointer;
+}
+
+.function-key span {
+    color: var(--axiom-orange);
+    margin-right: 4px;
+}
+
+.function-key.active {
+    color: #FFFFFF;
+    border-bottom: 2px solid var(--axiom-orange);
+}
+
+/* SCROLLBARS - MINIMAL */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-pure);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--panel-border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--axiom-secondary);
+}
+
+/* ANIMATIONS */
+@keyframes price-flash-up {
+    0% {
+        background-color: rgba(0, 255, 65, 0.2);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes price-flash-down {
+    0% {
+        background-color: rgba(255, 34, 68, 0.2);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.flash-up {
+    animation: price-flash-up 0.3s ease-out;
+}
+
+.flash-down {
+    animation: price-flash-down 0.3s ease-out;
+}
+
+/* MAP STYLES */
+.leaflet-container {
+    background: var(--bg-pure) !important;
+}
+
+/* TICKER */
+.ticker-container {
+    height: 24px;
+    background-color: var(--bg-panel);
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--font-data);
+    font-size: 12px;
+}
+
+/* HIDE TRADINGVIEW ATTRIBUTION */
+div[class*="tv-embed-widget-wrapper__link"],
+div[data-name="tradingview-logo"],
+a[href*="tradingview.com"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}

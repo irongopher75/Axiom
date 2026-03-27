@@ -1,0 +1,7 @@
+[
+    {"symbol": "JPM", "name": "JPMorgan Chase & Co.", "exchange": "NYSE", "typeDisp": "Wall Street"},
+    {"symbol": "GS", "name": "Goldman Sachs Group, Inc.", "exchange": "NYSE", "typeDisp": "Wall Street"},
+    {"symbol": "V", "name": "Visa Inc.", "exchange": "NYSE", "typeDisp": "Equity"},
+    {"symbol": "WMT", "name": "Walmart Inc.", "exchange": "NYSE", "typeDisp": "Equity"},
+    {"symbol": "DIS", "name": "The Walt Disney Company", "exchange": "NYSE", "typeDisp": "Wall Street"}
+]
