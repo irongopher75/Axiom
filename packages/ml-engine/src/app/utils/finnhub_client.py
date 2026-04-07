@@ -1,23 +1,25 @@
+import asyncio
+import logging
 import os
 import time
-import requests
-import asyncio
+from typing import Any
+
 import aiohttp
-import logging
-from typing import Dict, Optional, Any
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+
 class FinnhubClient:
     """
     Finnhub API Client with built-in rate limiting (60 RPM).
     Uses a simple timestamp-based gate for the free tier.
     """
+
     BASE_URL = "https://finnhub.io/api/v1"
-    
+
     def __init__(self):
         self.api_key = os.getenv("FINNHUB_API_KEY")
         self.last_request_time = 0
@@ -32,12 +34,12 @@ class FinnhubClient:
                 await asyncio.sleep(self.request_interval - elapsed)
             self.last_request_time = time.time()
 
-    async def get_quote(self, symbol: str) -> Dict[str, Any]:
+    async def get_quote(self, symbol: str) -> dict[str, Any]:
         """Fetch real-time quote for a symbol."""
         await self._throttle()
         url = f"{self.BASE_URL}/quote"
         params = {"symbol": symbol, "token": self.api_key}
-        
+
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(url, params=params) as response:
@@ -55,19 +57,24 @@ class FinnhubClient:
                 logger.error(f"Finnhub connection error: {str(e)}")
                 return {}
 
-    async def get_basic_financials(self, symbol: str) -> Dict[str, Any]:
+    async def get_basic_financials(self, symbol: str) -> dict[str, Any]:
         """Fetch basic financial data."""
         await self._throttle()
         url = f"{self.BASE_URL}/stock/metric"
         params = {"symbol": symbol, "metric": "all", "token": self.api_key}
-        
+
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                if response.status == 200:
-                    return await response.json()
+            try:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    logger.error(f"Finnhub basic financials error: {response.status}")
+                    return {}
+            except Exception as e:
+                logger.error(f"Finnhub basic financials connection error: {e}")
                 return {}
 
-    async def get_technical_indicators(self, symbol: str, resolution: str = "D") -> Dict[str, Any]:
+    async def get_technical_indicators(self, symbol: str, resolution: str = "D") -> dict[str, Any]:
         """Fetch technical indicators (if available in tier)."""
         # Note: Some technical indicators are paid in Finnhub
         await self._throttle()
@@ -78,10 +85,15 @@ class FinnhubClient:
             "resolution": resolution,
             "indicator": "rsi",
             "timeperiod": 14,
-            "token": self.api_key
+            "token": self.api_key,
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                if response.status == 200:
-                    return await response.json()
+            try:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    logger.error(f"Finnhub technical indicators error: {response.status}")
+                    return {}
+            except Exception as e:
+                logger.error(f"Finnhub technical indicators connection error: {e}")
                 return {}

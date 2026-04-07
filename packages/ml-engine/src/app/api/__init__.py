@@ -1,1 +1,13 @@
-from . import users, admin, prediction, trades, backtest, terminal, quotes, news, flights, search, ai
+from . import (
+    admin,
+    ai,
+    backtest,
+    flights,
+    news,
+    prediction,
+    quotes,
+    search,
+    terminal,
+    trades,
+    users,
+)

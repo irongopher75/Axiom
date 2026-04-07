@@ -4,16 +4,18 @@
 # Everything else is local.
 # This connects to the shared MongoDB news database.
 
-import motor.motor_asyncio
+from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import AsyncIterator
+
+import motor.motor_asyncio
+
 
 class NewsClient:
     """
     Reads news from the shared MongoDB Atlas instance.
     """
 
-    def __init__(self, uri: str, db_name: str = 'axiom_news'):
+    def __init__(self, uri: str, db_name: str = "axiom_news"):
         self.uri = uri
         self.db_name = db_name
         self._client: motor.motor_asyncio.AsyncIOMotorClient | None = None
@@ -32,10 +34,10 @@ class NewsClient:
         self._db = self._client[self.db_name]
         # Verify connection — fail fast if MongoDB unreachable
         try:
-            await self._client.admin.command('ping')
+            await self._client.admin.command("ping")
         except Exception as e:
             # Non-fatal — news is supplementary, not critical
-            print(f'[NewsClient] MongoDB unreachable: {e}', flush=True)
+            print(f"[NewsClient] MongoDB unreachable: {e}", flush=True)
             self._client = None
 
     async def get_recent(
@@ -48,21 +50,25 @@ class NewsClient:
 
         query = {}
         if since:
-            query['ts'] = {'$gte': since}
+            query["ts"] = {"$gte": since}
 
-        cursor = self._db.news.find(
-            query,
-            projection={
-                '_id': 0,
-                'ts': 1,
-                'headline': 1,
-                'source': 1,
-                'sentiment': 1,
-                'severity': 1,
-                'entities': 1,
-                'url': 1,
-            }
-        ).sort('ts', -1).limit(limit)
+        cursor = (
+            self._db.news.find(
+                query,
+                projection={
+                    "_id": 0,
+                    "ts": 1,
+                    "headline": 1,
+                    "source": 1,
+                    "sentiment": 1,
+                    "severity": 1,
+                    "entities": 1,
+                    "url": 1,
+                },
+            )
+            .sort("ts", -1)
+            .limit(limit)
+        )
 
         return await cursor.to_list(length=limit)
 
@@ -74,12 +80,12 @@ class NewsClient:
             return
 
         async with self._db.news.watch(
-            pipeline=[{'$match': {'operationType': 'insert'}}],
-            full_document='updateLookup',
+            pipeline=[{"$match": {"operationType": "insert"}}],
+            full_document="updateLookup",
         ) as stream:
             async for change in stream:
-                doc = change.get('fullDocument', {})
-                doc.pop('_id', None)
+                doc = change.get("fullDocument", {})
+                doc.pop("_id", None)
                 yield doc
 
     async def disconnect(self):

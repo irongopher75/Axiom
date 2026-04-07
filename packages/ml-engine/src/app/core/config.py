@@ -1,5 +1,6 @@
-import os
 import json
+import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,14 +9,16 @@ load_dotenv()
 TICKER_MAP_FILE = os.path.join(os.path.dirname(__file__), "data", "ticker_mappings.json")
 DEFAULT_TICKER_SUFFIX = os.getenv("DEFAULT_TICKER_SUFFIX", ".NS")
 
+
 def load_ticker_map():
     if os.path.exists(TICKER_MAP_FILE):
         try:
-            with open(TICKER_MAP_FILE, 'r') as f:
+            with open(TICKER_MAP_FILE) as f:
                 return json.load(f)
         except:
             pass
     return {}
+
 
 TICKER_MAP = load_ticker_map()
 
@@ -51,13 +54,13 @@ VOL_VERY_HIGH = float(os.getenv("VOL_VERY_HIGH", 4.0))
 VOL_VERY_LOW = float(os.getenv("VOL_VERY_LOW", 1.5))
 
 # --- Strategy Factors ---
-VOL_确认_RATIO = float(os.getenv("VOL_CONFIRM_RATIO", 1.5)) # Spike factor
+VOL_确认_RATIO = float(os.getenv("VOL_CONFIRM_RATIO", 1.5))  # Spike factor
 MOMENTUM_LOOKBACK = int(os.getenv("MOMENTUM_LOOKBACK", 20))
 MOMENTUM_PROXIMITY = float(os.getenv("MOMENTUM_PROXIMITY", 0.995))
 
 # --- Options Simulation ---
 OPTION_PREMIUM_DEFAULT = float(os.getenv("OPTION_PREMIUM_DEFAULT", 100))
-OPTION_SCAN_RANGE = float(os.getenv("OPTION_SCAN_RANGE", 0.10)) # 10% each side
+OPTION_SCAN_RANGE = float(os.getenv("OPTION_SCAN_RANGE", 0.10))  # 10% each side
 
 # --- Redis Configuration ---
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

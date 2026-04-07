@@ -1,32 +1,38 @@
-from pydantic import BaseModel, EmailStr, BeforeValidator
-from typing import Optional, List, Annotated
-from datetime import datetime
+from typing import Annotated
+
+from pydantic import BaseModel, BeforeValidator, EmailStr
 
 # Helper to convert ObjectId to str
 StrId = Annotated[str, BeforeValidator(str)]
 
+
 class UserBase(BaseModel):
     email: EmailStr
+
 
 class UserCreate(UserBase):
     password: str
 
+
 class User(UserBase):
-    id: Optional[StrId] = None
+    id: StrId | None = None
     is_active: bool
     is_superuser: bool
     is_approved: bool
-    watchlist: List[str] = []
+    watchlist: list[str] = []
 
     class Config:
         from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    email: str | None = None
+
 
 class PredictionResult(BaseModel):
     prediction: str
@@ -41,14 +47,15 @@ class PredictionResult(BaseModel):
     current_price: float
     strategy: str
     reasoning: str
-    poc: Optional[float] = None
+    poc: float | None = None
     vol_ratio: float
-    strike: Optional[float] = None
-    option_type: Optional[str] = None
-    payoff_graph: List[dict]
+    strike: float | None = None
+    option_type: str | None = None
+    payoff_graph: list[dict]
+
 
 class ManualTradeRequest(BaseModel):
     symbol: str
-    side: str # BUY/SELL
+    side: str  # BUY/SELL
     quantity: float
     price: float

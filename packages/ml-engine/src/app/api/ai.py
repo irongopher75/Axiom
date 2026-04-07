@@ -1,9 +1,10 @@
+import json
 import logging
 import os
-import json
+
+import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-import httpx
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -139,6 +140,7 @@ Never ignore concentration risk or margin risk when portfolio data shows elevate
 [END_ANALYSIS]
 """
 
+
 @router.post("/chat")
 async def chat_with_ai(request: Request):
     try:
@@ -156,7 +158,10 @@ async def chat_with_ai(request: Request):
     if not api_key:
         api_key = os.getenv("VITE_ANTHROPIC_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY environment variable is not set on the server")
+            raise HTTPException(
+                status_code=500,
+                detail="ANTHROPIC_API_KEY environment variable is not set on the server",
+            )
 
     # Inject market context into the latest user message
     if market_context and len(messages) > 0 and messages[-1].get("role") == "user":
@@ -171,21 +176,21 @@ async def chat_with_ai(request: Request):
         "system": SYSTEM_PROMPT,
         "messages": messages,
         "stream": True,
-        "stop_sequences": ["[END_ANALYSIS]"]
+        "stop_sequences": ["[END_ANALYSIS]"],
     }
 
     async def stream_generator():
         client = httpx.AsyncClient(timeout=30.0)
         try:
             async with client.stream(
-                "POST", 
-                "https://api.anthropic.com/v1/messages", 
+                "POST",
+                "https://api.anthropic.com/v1/messages",
                 headers={
                     "x-api-key": api_key,
                     "anthropic-version": "2023-06-01",
-                    "content-type": "application/json"
+                    "content-type": "application/json",
                 },
-                json=anthropic_payload
+                json=anthropic_payload,
             ) as response:
                 if response.status_code != 200:
                     error_text = await response.aread()

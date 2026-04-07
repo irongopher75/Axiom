@@ -1,13 +1,14 @@
 # packages/ml-engine/src/routers/news.py
 # Sidecar: Local News Feed (Mock or Cloud-backed)
 
-from fastapi import APIRouter, Request, Query
-from typing import List
 import logging
 from datetime import datetime
 
+from fastapi import APIRouter
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
 
 @router.get("/feed")
 async def get_news_feed(limit: int = 60):
@@ -20,7 +21,7 @@ async def get_news_feed(limit: int = 60):
             "source": "AXIOM News",
             "timestamp": datetime.now().isoformat(),
             "sentiment": "BULLISH",
-            "category": "MARKET"
+            "category": "MARKET",
         },
         {
             "id": "news-2",
@@ -28,6 +29,6 @@ async def get_news_feed(limit: int = 60):
             "source": "Reuters",
             "timestamp": datetime.now().isoformat(),
             "sentiment": "NEUTRAL",
-            "category": "COMMODITIES"
-        }
+            "category": "COMMODITIES",
+        },
     ]

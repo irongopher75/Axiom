@@ -1,21 +1,22 @@
 # packages/ml-engine/src/common_db/duckdb_client.py
 
+import asyncio
+import logging
+import threading
+from pathlib import Path
+
 import duckdb
 import pandas as pd
-from pathlib import Path
-from typing import Optional, List
-import asyncio
-import threading
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class DuckDBClient:
     """
     Thread-safe DuckDB client for the Sidecar.
     Maintains a single connection with a lock for all operations.
     """
-    
+
     SCHEMA = """
         -- Predictions history
         CREATE TABLE IF NOT EXISTS predictions (
@@ -86,6 +87,14 @@ class DuckDBClient:
             added_at    TIMESTAMPTZ DEFAULT now()
         );
 
+        -- Performance Indices
+        CREATE INDEX IF NOT EXISTS idx_predictions_symbol ON predictions (symbol);
+        CREATE INDEX IF NOT EXISTS idx_predictions_ts ON predictions (ts DESC);
+        CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades (symbol);
+        CREATE INDEX IF NOT EXISTS idx_trades_ts ON trades (timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_ticks_symbol ON ticks (symbol);
+        CREATE INDEX IF NOT EXISTS idx_ticks_ts ON ticks (ts DESC);
+
         -- Vessel position history
         CREATE TABLE IF NOT EXISTS vessel_history (
             mmsi        INTEGER NOT NULL,
@@ -112,22 +121,36 @@ class DuckDBClient:
         self._conn.execute(self.SCHEMA)
         logger.info(f"DuckDB initialized at {self.db_path}")
 
-    def query(self, sql: str, params: Optional[list] = None) -> pd.DataFrame:
+    def query(self, sql: str, params: list | None = None) -> pd.DataFrame:
         """Synchronous query — thread-safe via lock."""
-        with self._lock:
-            if params:
-                return self._conn.execute(sql, params).df()
-            return self._conn.execute(sql).df()
-
-    async def execute(self, sql: str, params: Optional[list] = None):
-        """Async execute — offloads to thread to avoid blocking loop."""
-        def _exec():
+        if not self._conn:
+            raise RuntimeError("DuckDBClient not initialized. Call initialize() first.")
+        
+        try:
             with self._lock:
                 if params:
-                    self._conn.execute(sql, params)
-                else:
-                    self._conn.execute(sql)
-                self._conn.commit()
+                    return self._conn.execute(sql, params).df()
+                return self._conn.execute(sql).df()
+        except Exception as e:
+            logger.error(f"DuckDB query failed: {sql} | Error: {e}")
+            raise
+
+    async def execute(self, sql: str, params: list | None = None):
+        """Async execute — offloads to thread to avoid blocking loop."""
+        if not self._conn:
+            raise RuntimeError("DuckDBClient not initialized. Call initialize() first.")
+
+        def _exec():
+            try:
+                with self._lock:
+                    if params:
+                        self._conn.execute(sql, params)
+                    else:
+                        self._conn.execute(sql)
+                    self._conn.commit()
+            except Exception as e:
+                logger.error(f"DuckDB execute failed: {sql} | Error: {e}")
+                raise
 
         await asyncio.to_thread(_exec)
 

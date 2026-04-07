@@ -2,27 +2,30 @@
 # Sidecar Entry Point — FastAPI
 # Local-first architecture
 
-import uvicorn
 import argparse
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-from pathlib import Path
-from datetime import datetime
-import traceback
 import logging
+import traceback
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
 
+import uvicorn
 from common_db.duckdb_client import DuckDBClient
 from common_services.news_client import NewsClient
-from risk_engine import RiskEngine
-from routers import predict, backtest, ai, users, trades, quotes, terminal, search, news
+from common_services.symbols_manager import SymbolsManager
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from app.services.risk_engine import RiskEngine
+from routers import ai, backtest, news, predict, quotes, search, symbols, terminal, trades, users
+
+logger = logging.getLogger(__name__)
 
 # ── Lifecycle ──────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DuckDB
-    app.state.db = DuckDBClient(Path(app.state.data_dir) / 'axiom.duckdb')
+    app.state.db = DuckDBClient(Path(app.state.data_dir) / "axiom.duckdb")
     await app.state.db.initialize()
 
     # Initialize News Client (Cloud)
@@ -35,21 +38,34 @@ async def lifespan(app: FastAPI):
     # Initialize Risk Engine
     app.state.risk = RiskEngine()
 
+    # Initialize Symbols Manager
+    app.state.symbols = SymbolsManager(Path(app.state.data_dir) / "symbols.db")
+    await app.state.symbols.init_db()
+
     print("AXIOM_READY", flush=True)
     yield
     await app.state.db.close()
     await app.state.news.disconnect()
 
+
 app = FastAPI(title="AXIOM Sidecar", lifespan=lifespan)
+
+
+import os
+
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     tb = traceback.format_exc()
-    print(f"GLOBAL ERROR: {tb}", flush=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error", "traceback": tb},
-    )
+    logger.error(f"GLOBAL ERROR: {tb}")
+    
+    content = {"detail": "Internal Server Error"}
+    if DEBUG:
+        content["traceback"] = tb
+        
+    return JSONResponse(status_code=500, content=content)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,12 +84,15 @@ app.include_router(news.router, prefix="/api/v1/news", tags=["News"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(trades.router, prefix="/api/v1/trades", tags=["Trades"])
 app.include_router(quotes.router, prefix="/api/v1/quotes", tags=["Quotes"])
+app.include_router(symbols.router, prefix="/api/v1/symbols", tags=["Symbols"])
 app.include_router(terminal.router, prefix="/api/v1/ws", tags=["Terminal WS"])
+
 
 # ── Health ─────────────────────────────────────────────────────
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str]:
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
 
 # ── Legacy News WS (Keeping for backward compatibility) ────────
 @app.websocket("/api/v1/ws/news")
@@ -84,6 +103,7 @@ async def news_feed_ws(websocket: WebSocket):
             await websocket.send_json(item)
     except WebSocketDisconnect:
         pass
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

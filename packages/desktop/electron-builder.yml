@@ -6,9 +6,9 @@ copyright: Copyright © 2026 AXIOM Intelligence
 mac:
   target:
     - target: dmg
-      arch:
-        - universal    # x86_64 + arm64 in one binary
-                       # Runs natively on Intel AND Apple Silicon
+      arch: universal
+    - target: zip
+      arch: universal
   category: public.app-category.finance
   hardenedRuntime: true
   gatekeeperAssess: false
@@ -33,7 +33,8 @@ dmg:
     width: 540
     height: 380
 
-afterSign: scripts/notarize.js
+# TEMPORARILY DISABLED: Notarization bypassed for direct distribution
+# afterSign: scripts/notarize.js
 
 directories:
   output: dist
@@ -58,6 +59,8 @@ extraResources:
     to: ml-engine/src
     filter:
       - "**/*.py"
+      - "**/*.db"
+      - "**/*.json"
       - "!**/__pycache__"
       - "!**/*.pyc"
 
@@ -66,7 +69,7 @@ extraResources:
 
 publish:
   provider: github
-  owner: YOUR_GITHUB_USERNAME
-  repo: axiom-desktop
+  owner: irongopher75
+  repo: Axiom
   releaseType: release
   updaterCacheDirName: axiom-updater

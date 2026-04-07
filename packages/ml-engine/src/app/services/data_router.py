@@ -1,15 +1,16 @@
-import os
-import json
-import logging
 import asyncio
+import logging
+from typing import Any
+
 import pandas as pd
-from typing import Dict, Any, Optional
 import yfinance as yf
-from app.utils.finnhub_client import FinnhubClient
-from app.utils.breeze_client import BreezeClient
+
 from app.core import config
+from app.utils.breeze_client import BreezeClient
+from app.utils.finnhub_client import FinnhubClient
 
 logger = logging.getLogger(__name__)
+
 
 # Redis could be used here, but we'll implement a fallback local cache for resilience
 class LocalCache:
@@ -21,24 +22,23 @@ class LocalCache:
         async with self._lock:
             entry = self.data.get(key)
             if entry:
-                if entry['expiry'] > asyncio.get_event_loop().time():
-                    return entry['value']
+                if entry["expiry"] > asyncio.get_event_loop().time():
+                    return entry["value"]
                 else:
                     del self.data[key]
             return None
 
     async def set(self, key: str, value: Any, ttl: int):
         async with self._lock:
-            self.data[key] = {
-                'value': value,
-                'expiry': asyncio.get_event_loop().time() + ttl
-            }
+            self.data[key] = {"value": value, "expiry": asyncio.get_event_loop().time() + ttl}
+
 
 class DataRouter:
     """
     Orchestrates data fetching across providers with caching logic.
     Decouples providers from the ML Engine.
     """
+
     def __init__(self):
         self.finnhub = FinnhubClient()
         self.breeze = BreezeClient()
@@ -53,20 +53,22 @@ class DataRouter:
         # Check against ticker map or other heuristics if needed
         return False
 
-    async def get_price_data(self, symbol: str, interval: str = "1h", period: str = "1mo") -> pd.DataFrame:
+    async def get_price_data(
+        self, symbol: str, interval: str = "1h", period: str = "1mo"
+    ) -> pd.DataFrame:
         """
         Routes the request to the appropriate data provider.
         Checks cache first.
         """
         cache_key = f"prices:{symbol}:{interval}:{period}"
         cached_df_json = await self.cache.get(cache_key)
-        
+
         if cached_df_json:
             logger.info(f"Cache hit for {symbol}")
             return pd.read_json(cached_df_json)
 
         logger.info(f"Cache miss for {symbol}, routing to provider...")
-        
+
         # 1. Indian Markets -> Breeze (Fallback to yfinance for now)
         if self._is_indian_market(symbol):
             # Currently Breeze is a placeholder, so we use yfinance as fallback
@@ -75,28 +77,32 @@ class DataRouter:
             # 2. US/Global Markets -> Finnhub for real-time, yfinance for history
             # For 1mo data, yfinance is often more robust on free tiers
             df = await self._fetch_from_yfinance(symbol, interval, period)
-            
+
             # Enrich with real-time quote from Finnhub if requested interval is small
             if interval in ["1m", "5m", "15m", "1h"]:
                 quote = await self.finnhub.get_quote(symbol)
-                if quote and 'c' in quote:
+                if quote and "c" in quote:
                     # Append or update the last price with Finnhub's real-time data
-                    new_row = pd.DataFrame([{
-                        "Open": quote['o'],
-                        "High": quote['h'],
-                        "Low": quote['l'],
-                        "Close": quote['c'],
-                        "Volume": quote['v'],
-                        "Datetime": pd.to_datetime('now', utc=True)
-                    }]).set_index("Datetime")
+                    new_row = pd.DataFrame(
+                        [
+                            {
+                                "Open": quote["o"],
+                                "High": quote["h"],
+                                "Low": quote["l"],
+                                "Close": quote["c"],
+                                "Volume": quote["v"],
+                                "Datetime": pd.to_datetime("now", utc=True),
+                            }
+                        ]
+                    ).set_index("Datetime")
                     # Merge logic here (simple version: concat if time is newer)
                     df = pd.concat([df, new_row])
-                    df = df[~df.index.duplicated(keep='last')]
+                    df = df[~df.index.duplicated(keep="last")]
 
         # Cache the result
         if not df.empty:
             await self.cache.set(cache_key, df.to_json(), config.CACHE_TTL_PRICE)
-            
+
         return df
 
     async def _fetch_from_yfinance(self, symbol: str, interval: str, period: str) -> pd.DataFrame:

@@ -32,15 +32,30 @@ export const getWsUrl = (clientId) => {
     return `${wsBase}/api/v1/ws/terminal/${clientId}${tokenQuery}`;
 };
 
-// Interceptor to handle 401/403 (Unauthorized/Forbidden)
+// Interceptor to handle specific Sidecar error codes and Auth redirects
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            const isAuthPage = window.location.pathname === '/' || window.location.pathname === '/login';
-            if (!isAuthPage) {
-                localStorage.removeItem('token');
-                window.location.href = '/';
+        if (error.response) {
+            const { status, data } = error.response;
+            
+            // Handle 401/403 (Unauthorized/Forbidden)
+            if (status === 401 || status === 403) {
+                const isAuthPage = window.location.pathname === '/' || window.location.pathname === '/login';
+                if (!isAuthPage) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                }
+            }
+            
+            // Log structured validation errors (422) for debugging
+            if (status === 422) {
+                console.error('API Validation Error:', data?.detail || data);
+            }
+            
+            // Log generic server errors
+            if (status >= 500) {
+                console.error('Sidecar Server Error:', data?.detail || 'Internal Server Error');
             }
         }
         return Promise.reject(error);
@@ -92,8 +107,11 @@ export const getSymbols = async (exchange) => {
 
 // --- Backtesting API ---
 export const runBacktest = async (symbol, period = '1y', interval = '1d', initial_capital = 100000) => {
-    return await api.post('/api/v1/backtest/run', null, {
-        params: { symbol, period, interval, initial_capital }
+    return await api.post('/api/v1/backtest/run', {
+        symbol,
+        period,
+        interval,
+        initial_capital
     });
 }
 

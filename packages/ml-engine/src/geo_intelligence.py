@@ -3,10 +3,10 @@ Aviation Service — uses the unofficial FlightRadarAPI library.
 Falls back to OpenSky REST if FlightRadarAPI is unavailable.
 No API key required for FlightRadarAPI.
 """
+
 import asyncio
 import logging
 import time
-from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,20 +16,23 @@ CARGO_PREFIXES = {"FDX", "UPS", "DHK", "CLX", "GTI", "BOX", "PAC", "ATN", "ABX",
 
 class AviationService:
     def __init__(self):
-        self._cache: List[Dict] = []
+        self._cache: list[dict] = []
         self._last_update: float = 0
         self._is_running = False
         self._poll_interval = 30  # seconds
 
         try:
             from FlightRadar24 import FlightRadar24API
+
             self._fr_api = FlightRadar24API()
             self._source = "FlightRadar24 (unofficial)"
             logger.info("AviationService: FlightRadarAPI loaded")
         except ImportError:
             self._fr_api = None
             self._source = "Unavailable"
-            logger.warning("AviationService: FlightRadarAPI not installed. Run: pip3 install FlightRadarAPI")
+            logger.warning(
+                "AviationService: FlightRadarAPI not installed. Run: pip3 install FlightRadarAPI"
+            )
 
     async def start(self):
         if self._is_running:
@@ -41,12 +44,12 @@ class AviationService:
     async def stop(self):
         self._is_running = False
 
-    async def get_flights(self) -> List[Dict]:
+    async def get_flights(self) -> list[dict]:
         if time.time() - self._last_update > self._poll_interval or not self._cache:
             await self._fetch_and_update()
         return self._cache
 
-    async def get_stats(self) -> Dict:
+    async def get_stats(self) -> dict:
         flights = await self.get_flights()
         airborne = flights  # already filtered in _normalize
         cargo = [f for f in airborne if f.get("type") == "CARGO"]
@@ -76,29 +79,30 @@ class AviationService:
         except Exception as e:
             logger.error(f"AviationService fetch error: {e}")
 
-    def _normalize(self, f) -> Dict:
+    def _normalize(self, f) -> dict:
         callsign = str(f.callsign or f.id or "").strip()
         is_cargo = any(callsign.startswith(pfx) for pfx in CARGO_PREFIXES)
         return {
-            "icao24":      str(f.icao_24bit or "").lower(),
-            "callsign":    callsign,
-            "airline":     str(f.airline_iata or ""),
-            "country":     str(f.origin_country or "---") if hasattr(f, 'origin_country') else "---",
-            "lat":         round(float(f.latitude), 4),
-            "lon":         round(float(f.longitude), 4),
+            "icao24": str(f.icao_24bit or "").lower(),
+            "callsign": callsign,
+            "airline": str(f.airline_iata or ""),
+            "country": str(f.origin_country or "---") if hasattr(f, "origin_country") else "---",
+            "lat": round(float(f.latitude), 4),
+            "lon": round(float(f.longitude), 4),
             "altitude_ft": int(f.altitude or 0),
-            "altitude_m":  round(int(f.altitude or 0) * 0.3048),
-            "speed_kts":   int(f.ground_speed or 0),
-            "heading":     int(f.heading or 0),
-            "on_ground":   bool(f.on_ground) if hasattr(f, 'on_ground') else False,
-            "type":        "CARGO" if is_cargo else "PAX",
-            "origin":      str(f.origin_airport_iata or ""),
+            "altitude_m": round(int(f.altitude or 0) * 0.3048),
+            "speed_kts": int(f.ground_speed or 0),
+            "heading": int(f.heading or 0),
+            "on_ground": bool(f.on_ground) if hasattr(f, "on_ground") else False,
+            "type": "CARGO" if is_cargo else "PAX",
+            "origin": str(f.origin_airport_iata or ""),
             "destination": str(f.destination_airport_iata or ""),
         }
 
 
 # Singleton
-_aviation_service: Optional[AviationService] = None
+_aviation_service: AviationService | None = None
+
 
 def get_aviation_service() -> AviationService:
     global _aviation_service

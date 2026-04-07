@@ -1,1 +1,1 @@
-from . import predict, backtest, ai, geo, users, trades, quotes, terminal, search, news
+from . import ai, backtest, geo, news, predict, quotes, search, terminal, trades, users

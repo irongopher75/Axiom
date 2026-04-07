@@ -1,7 +1,7 @@
 # app/services/satellite_service.py
 import random
 import time
-from typing import List, Dict
+
 
 class SatelliteAISService:
     def __init__(self):
@@ -13,9 +13,13 @@ class SatelliteAISService:
             {"id": 43792, "name": "AISSAT-1"},
             {"id": 43784, "name": "AISSAT-2"},
         ]
-        self.ground_stations = ["STATION-ALPHA (Athens)", "STATION-BETA (Svalbard)", "STATION-GAMMA (Azores)"]
+        self.ground_stations = [
+            "STATION-ALPHA (Athens)",
+            "STATION-BETA (Svalbard)",
+            "STATION-GAMMA (Azores)",
+        ]
 
-    def augment_vessels(self, vessels: List[Dict]) -> List[Dict]:
+    def augment_vessels(self, vessels: list[dict]) -> list[dict]:
         """
         Injects satellite telemetry metadata into the vessel list.
         Simulates which vessels are currently within 'satellite footprint'.
@@ -26,14 +30,17 @@ class SatelliteAISService:
             if random.random() < 0.7:
                 sat = random.choice(self.satellites)
                 v["intel"] = v.get("intel", {})
-                v["intel"].update({
-                    "source": "Satellite AIS",
-                    "satellite": sat["name"],
-                    "norad_id": sat["id"],
-                    "ground_station": random.choice(self.ground_stations),
-                    "signal_dbm": random.randint(-110, -85),
-                    "last_ping": int(now - random.randint(0, 30))
-                })
+                v["intel"].update(
+                    {
+                        "source": "Satellite AIS",
+                        "satellite": sat["name"],
+                        "norad_id": sat["id"],
+                        "ground_station": random.choice(self.ground_stations),
+                        "signal_dbm": random.randint(-110, -85),
+                        "last_ping": int(now - random.randint(0, 30)),
+                    }
+                )
         return vessels
+
 
 satellite_ais = SatelliteAISService()

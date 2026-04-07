@@ -1,18 +1,21 @@
+from datetime import UTC, datetime
+from typing import Any
+
 from beanie import Document
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+
 
 class SystemState(Document):
     user_id: str
     last_known_balance: float
-    active_positions: Dict[str, Any] = {} # {symbol: {quantity, entry_price, side}}
-    last_updated: datetime = datetime.now(timezone.utc)
+    active_positions: dict[str, Any] = {}  # {symbol: {quantity, entry_price, side}}
+    last_updated: datetime = datetime.now(UTC)
     is_emergency_halted: bool = False
 
     class Settings:
         name = "system_state"
 
-async def save_state(user_id: str, balance: float, positions: Dict[str, Any]):
+
+async def save_state(user_id: str, balance: float, positions: dict[str, Any]):
     """Persists current trading state to MongoDB."""
     state = await SystemState.find_one(SystemState.user_id == user_id)
     if not state:
@@ -20,17 +23,19 @@ async def save_state(user_id: str, balance: float, positions: Dict[str, Any]):
     else:
         state.last_known_balance = balance
         state.active_positions = positions
-        state.last_updated = datetime.now(timezone.utc)
+        state.last_updated = datetime.now(UTC)
     await state.save()
 
-async def get_state(user_id: str) -> Optional[SystemState]:
+
+async def get_state(user_id: str) -> SystemState | None:
     """Retrieves the last persistent state for recovery."""
     return await SystemState.find_one(SystemState.user_id == user_id)
+
 
 async def trigger_emergency_halt(user_id: str):
     """Flags the system as halted in case of catastrophic failure."""
     state = await SystemState.find_one(SystemState.user_id == user_id)
     if state:
         state.is_emergency_halted = True
-        state.last_updated = datetime.now(timezone.utc)
+        state.last_updated = datetime.now(UTC)
         await state.save()

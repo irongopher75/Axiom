@@ -13,7 +13,12 @@
     "setup:python": "node packages/desktop/scripts/download-python-runtime.js",
     "clean:dist": "rm -rf packages/desktop/dist packages/desktop/resources/python-runtime packages/desktop/renderer packages/desktop/out",
     "release:mac": "npm run clean:dist && npm run setup:python && npm run build:ui:desktop && npm run build:desktop:main && npm run dist",
-    "start:desktop": "pkill -f 'python3.*main.py.*18432' || true && npx electron packages/desktop"
+    "release:portable": "npm run clean:dist && npm run setup:python && npm run build:ui:desktop && npm run build:desktop:main && npx electron-builder --mac zip --dir",
+    "start:desktop": "pkill -f 'python3.*main.py.*18432' || true && npx electron packages/desktop",
+    "lint:python": "ruff check packages/ml-engine/src",
+    "format:python": "ruff format packages/ml-engine/src",
+    "test:python": "export PYTHONPATH=$PYTHONPATH:$(pwd)/packages/ml-engine/src && packages/ml-engine/venv/bin/pytest packages/ml-engine/tests",
+    "lint:ui": "eslint packages/ui/src"
   },
   "devDependencies": {
     "7zip-bin": "^5.2.0",
