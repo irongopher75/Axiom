@@ -6,7 +6,13 @@ import useTerminalStore from '../../store/useTerminalStore';
 
 const LandingPage = () => {
     const navigate = useNavigate();
-    const { vessels, aircraft, intelFeed, connect, isLive } = useTerminalStore();
+    const { 
+        vessels = [], 
+        aircraft = [], 
+        intelFeed = [], 
+        connect = () => {}, 
+        isLive = false 
+    } = useTerminalStore();
 
     const heroRef = useRef(null);
     const mapSectionRef = useRef(null);

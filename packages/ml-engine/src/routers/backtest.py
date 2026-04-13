@@ -1,81 +1,80 @@
-# packages/ml-engine/src/routers/backtest.py
-# Adapted for Sidecar: Local-only, No Auth, DuckDB-backed
+"""
+Backtest Router — POST /api/v1/backtest/run
+Wraps the Backtester class and exposes it as an HTTP endpoint.
+"""
 
-import logging
-import uuid
-
-from backtester import VectorizedBacktester
 from fastapi import APIRouter, HTTPException, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from pydantic import BaseModel, Field
+from typing import Optional
+import logging
 
-from pydantic import BaseModel, ConfigDict, Field
+from backtester import Backtester
 
-router = APIRouter()
-logger = logging.getLogger(__name__)
+logger  = logging.getLogger(__name__)
+# Removed prefix because main.py already adds app.include_router(..., prefix="/api/v1/backtest")
+router  = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 class BacktestRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    symbol: str = Field(..., pattern=r"^[A-Z0-9.-]{1,20}$")
-    period: str = Field("1y", pattern=r"^\d+(d|mo|y)$")
-    interval: str = Field("1d", pattern=r"^\d+(m|h|d|wk|mo)$")
-    initial_capital: float = Field(100000.0, gt=0)
+    ticker:         str
+    period:         str            = "1y"
+    fast_sma:       int            = Field(default=20, ge=2, le=200)
+    slow_sma:       int            = Field(default=50, ge=2, le=500)
+    # Optional override — omit to use the live ^IRX rate
+    risk_free_rate: Optional[float] = Field(default=None, ge=0, le=0.2)
 
 
 @router.post("/run")
-async def run_backtest(
-    request: Request,
-    body: BacktestRequest,
-):
-    symbol = body.symbol.upper()
-    db = request.app.state.db
-    run_id = str(uuid.uuid4())
+@limiter.limit("10/minute")
+async def run_backtest(body: BacktestRequest, request: Request):
+    """
+    Run an SMA-crossover backtest for the given ticker.
 
-    try:
-        bt = VectorizedBacktester(symbol, initial_capital=body.initial_capital)
-        # VectorizedBacktester.run handles its own offloading to asyncio.to_thread
-        result = await bt.run(period=body.period, interval=body.interval)
+    Parameters:
+      ticker          — stock symbol (e.g. "AAPL")
+      period          — yfinance period string (e.g. "1y", "2y")
+      fast_sma        — fast SMA window (default 20)
+      slow_sma        — slow SMA window (default 50)
+      risk_free_rate  — optional annual rate (omit to use live ^IRX)
 
-        # Save run and metrics to DuckDB
-        sql_run = "INSERT INTO backtest_runs (id, symbol, exchange, strategy) VALUES (?, ?, ?, ?)"
-        await db.execute(sql_run, [run_id, symbol, "US", "COMPOSITE"])
-
-        sql_metrics = """
-            INSERT INTO backtest_metrics (run_id, metric, value)
-            VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)
-        """
-        # Save individual metrics to match the KVP schema
-        await db.execute(
-            sql_metrics,
-            [
-                run_id, "sharpe", result["sharpe_ratio"],
-                run_id, "max_drawdown", result["max_drawdown"],
-                run_id, "win_rate", result["win_rate"]
-            ],
+    Returns:
+      total_return, annualised_return, sharpe_ratio, sortino_ratio,
+      max_drawdown, win_rate, num_trades, risk_free_rate, trades[]
+    """
+    if body.fast_sma >= body.slow_sma:
+        raise HTTPException(
+            status_code=400,
+            detail="fast_sma must be strictly less than slow_sma"
         )
 
-        return {"id": run_id, "metrics": result}
+    try:
+        bt     = Backtester(
+            ticker         = body.ticker,
+            period         = body.period,
+            fast_sma       = body.fast_sma,
+            slow_sma       = body.slow_sma,
+            risk_free_rate = body.risk_free_rate,
+        )
+        result = bt.run()
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Backtest failed for %s", body.ticker)
+        raise HTTPException(status_code=500, detail=f"Backtest error: {exc}")
 
-    except Exception as e:
-        logger.error(f"Backtest error for {symbol}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Backtest execution failed.")
-
-
-@router.get("/history")
-async def get_backtest_history(request: Request):
-    db = request.app.state.db
-    # Note: duckdb_client schema uses 'timestamp' for backtest_runs
-    df = db.query("""
-        SELECT r.*
-        FROM backtest_runs r 
-        ORDER BY r.timestamp DESC LIMIT 20
-    """)
-    return df.to_dict(orient="records")
-
-
-@router.get("/{run_id}")
-async def get_backtest_result(request: Request, run_id: str):
-    db = request.app.state.db
-    df = db.query("SELECT * FROM backtest_metrics WHERE run_id = ?", [run_id])
-    if df.empty:
-        raise HTTPException(status_code=404, detail="Run not found")
-    return df.to_dict(orient="records")
+    return {
+        "ticker":             result.ticker,
+        "strategy":           result.strategy,
+        "total_return":       result.total_return,
+        "annualised_return":  result.annualised_return,
+        "sharpe_ratio":       result.sharpe_ratio,
+        "sortino_ratio":      result.sortino_ratio,
+        "max_drawdown":       result.max_drawdown,
+        "win_rate":           result.win_rate,
+        "num_trades":         result.num_trades,
+        "risk_free_rate":     result.risk_free_rate,
+        "trades":             [t.__dict__ for t in result.trades],
+    }

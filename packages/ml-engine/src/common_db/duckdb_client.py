@@ -125,7 +125,7 @@ class DuckDBClient:
         """Synchronous query — thread-safe via lock."""
         if not self._conn:
             raise RuntimeError("DuckDBClient not initialized. Call initialize() first.")
-        
+
         try:
             with self._lock:
                 if params:

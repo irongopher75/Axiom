@@ -4,10 +4,10 @@
  */
 
 self.onmessage = ({ data }) => {
-    const { type, payload, viewport } = data;
+    const { type, payload } = data;
 
     switch (type) {
-        case 'PROCESS_VESSEL_BATCH':
+        case 'PROCESS_VESSEL_BATCH': {
             // Deduplicate and enrich vessel data
             const processedVessels = (payload || []).map(v => ({
                 ...v,
@@ -21,8 +21,9 @@ self.onmessage = ({ data }) => {
                 payload: processedVessels
             });
             break;
+        }
 
-        case 'PROCESS_AIRCRAFT_BATCH':
+        case 'PROCESS_AIRCRAFT_BATCH': {
             // Deduplicate and enrich aircraft data
             const processedAircraft = (payload || []).map(a => ({
                 ...a,
@@ -35,6 +36,7 @@ self.onmessage = ({ data }) => {
                 payload: processedAircraft
             });
             break;
+        }
 
         default:
             console.warn('[WORKER] Unknown task type:', type);

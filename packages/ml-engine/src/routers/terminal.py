@@ -42,7 +42,7 @@ ws_manager = TerminalWSManager()
 
 @router.websocket("/terminal/{client_id}")
 async def websocket_terminal_endpoint(
-    websocket: WebSocket, 
+    websocket: WebSocket,
     client_id: str = Path(..., pattern=r"^[a-zA-Z0-9_-]{1,50}$")
 ):
     await ws_manager.connect(websocket)

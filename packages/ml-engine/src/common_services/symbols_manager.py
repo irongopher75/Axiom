@@ -22,7 +22,7 @@ class SymbolsManager:
             os.makedirs(DATA_DIR)
 
     async def init_db(self):
-        """Initialize the symbols table and FTS5 virtual table if they don't exist."""
+        """Initialize the symbols table, FTS5 table, and seed from JSON if empty."""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS symbols (
@@ -43,16 +43,57 @@ class SymbolsManager:
                 await db.execute(
                     "CREATE VIRTUAL TABLE IF NOT EXISTS symbols_fts USING fts5(symbol, name, exchange, content='symbols', content_rowid='id')"
                 )
-                # Add triggers if missing (idempotent because of AFTER INSERT ON symbols ...)
                 await db.execute("""
                     CREATE TRIGGER IF NOT EXISTS symbols_ai AFTER INSERT ON symbols BEGIN
                       INSERT INTO symbols_fts(rowid, symbol, name, exchange) VALUES (new.id, new.symbol, new.name, new.exchange);
                     END;
                 """)
             except Exception as e:
-                print(f"FTS5 might not be supported in this SQLite: {e}")
+                logger.warning(f"FTS5 might not be supported: {e}")
+
+            # Seeding Check
+            cursor = await db.execute("SELECT COUNT(*) FROM symbols")
+            count = (await cursor.fetchone())[0]
+            if count == 0:
+                logger.info("Symbols DB empty. Seeding from JSON files...")
+                await self._seed_from_json(db)
 
             await db.commit()
+
+    async def _seed_from_json(self, db):
+        """Internal helper to load symbols from legacy JSON files."""
+        import json
+        exchange_files = {
+            "NSE": "nse_symbols.json",
+            "BSE": "bse_symbols.json",
+            "NASDAQ": "nasdaq_symbols.json",
+            "NYSE": "nyse_symbols.json",
+        }
+        for exchange, filename in exchange_files.items():
+            file_path = os.path.join(DATA_DIR, filename)
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path) as f:
+                        stocks = json.load(f)
+                        # Normalize keys if needed and add exchange
+                        batch = []
+                        for s in stocks:
+                            batch.append((
+                                s.get("symbol") or s.get("ticker"),
+                                s.get("name"),
+                                s.get("currency", "USD" if exchange in ["NYSE", "NASDAQ"] else "INR"),
+                                exchange,
+                                s.get("mic_code"),
+                                s.get("country"),
+                                s.get("type", "Common Stock")
+                            ))
+                        
+                        await db.executemany("""
+                            INSERT OR IGNORE INTO symbols (symbol, name, currency, exchange, mic_code, country, type)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """, batch)
+                except Exception as e:
+                    logger.error(f"Failed to seed {exchange} from {filename}: {e}")
 
     async def search_symbols(
         self, query: str, exchange: str | None = None, limit: int = 50
@@ -66,7 +107,7 @@ class SymbolsManager:
                 clean_query = query.replace('"', '').replace('*', '').replace(':', '').strip()
                 if not clean_query:
                     return []
-                    
+
                 # query + "*" allows for prefix matching e.g. "apl" matches "AAPL"
                 fts_query = f"{clean_query}*"
 

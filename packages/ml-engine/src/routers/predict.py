@@ -5,7 +5,6 @@ import asyncio
 import json
 import logging
 import os
-import re
 from datetime import UTC, datetime
 from pathlib import Path as FilePath
 
@@ -18,27 +17,35 @@ logger = logging.getLogger(__name__)
 
 @router.get("/symbols/{exchange}")
 async def get_exchange_symbols(
+    request: Request,
     exchange: str = Path(..., pattern=r"^(nse|bse|nasdaq|nyse)$")
 ):
-    exchange = exchange.lower()
-    # Map valid exchanges to their data files
-    exchange_files = {
-        "nse": "nse_symbols.json",
-        "bse": "bse_symbols.json",
-        "nasdaq": "nasdaq_symbols.json",
-        "nyse": "nyse_symbols.json",
-    }
-
+    exchange = exchange.upper()
+    symbols_mgr = request.app.state.symbols
+    
     try:
-        # In desktop, data files are in the same dir as main.py
-        file_path = FilePath(__file__).parent.parent / "data" / exchange_files[exchange]
-
-        if file_path.exists():
-            with open(file_path) as f:
-                return json.load(f)
-        return []
+        # Query symbols for the specific exchange from the DB
+        # We use a broad search or a specialized method if available
+        # But SymbolsManager doesn't have 'get_by_exchange' yet, so we'll use a search query or add it
+        results = await symbols_mgr.search_symbols("", exchange=exchange, limit=1000)
+        
+        if not results:
+            # Fallback to legacy JSON if DB is not populated yet
+            logger.warning(f"No symbols found in DB for {exchange}, falling back to static JSON.")
+            exchange_files = {
+                "NSE": "nse_symbols.json",
+                "BSE": "bse_symbols.json",
+                "NASDAQ": "nasdaq_symbols.json",
+                "NYSE": "nyse_symbols.json",
+            }
+            file_path = FilePath(__file__).parent.parent / "data" / exchange_files[exchange]
+            if file_path.exists():
+                with open(file_path) as f:
+                    return json.load(f)
+        
+        return results
     except Exception as e:
-        logger.error(f"Failed to load symbols for {exchange}: {e}")
+        logger.error(f"Failed to fetch symbols for {exchange}: {e}")
         raise HTTPException(status_code=500, detail="Failed to load symbols.")
 
 

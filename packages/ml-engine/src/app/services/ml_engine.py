@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from app.core import config
+from app.core.config import settings
 from app.services.data_router import DataRouter
 from app.utils.regime_detector import RegimeDetector
 from app.utils.resilience import retry_on_failure
@@ -30,7 +30,7 @@ class MarketAnalyzer:
                 raise Exception(f"No data found for symbol {self.symbol}")
 
             # --- HFT Algo 1.1: Real-Time Data Normalization (Vectorized) ---
-            rolling_median = self.data["Close"].rolling(window=config.SMA_FAST).median()
+            rolling_median = self.data["Close"].rolling(window=settings.SMA_FAST).median()
             self.data["Close"] = np.where(
                 (self.data["Close"] > rolling_median * 1.10)
                 | (self.data["Close"] < rolling_median * 0.90),
@@ -51,7 +51,7 @@ class MarketAnalyzer:
         # Check cache
         last_ts = self.data.index[-1]
         cache_key = (self.symbol, last_ts)
-        
+
         if cache_key in self._CACHE:
             cached_df = self._CACHE[cache_key]
             if len(cached_df) == len(self.data):
@@ -68,21 +68,22 @@ class MarketAnalyzer:
         df["ATR"] = (
             pd.concat([high_low, high_close, low_close], axis=1)
             .max(axis=1)
-            .rolling(window=config.ATR_WINDOW)
+            .max(axis=1)
+            .rolling(window=settings.ATR_WINDOW)
             .mean()
         )
 
         # RSI (Vectorized)
         delta = close.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=config.RSI_WINDOW).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=config.RSI_WINDOW).mean()
+        gain = (delta.where(delta > 0, 0)).rolling(window=settings.RSI_WINDOW).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=settings.RSI_WINDOW).mean()
         rs = gain / loss
         df["RSI"] = 100 - (100 / (1 + rs))
 
         # SMAs
-        df["SMA_20"] = close.rolling(window=config.SMA_FAST).mean()
-        df["SMA_50"] = close.rolling(window=config.SMA_MEDIUM).mean()
-        df["SMA_200"] = close.rolling(window=config.SMA_SLOW).mean()
+        df["SMA_20"] = close.rolling(window=settings.SMA_FAST).mean()
+        df["SMA_50"] = close.rolling(window=settings.SMA_MEDIUM).mean()
+        df["SMA_200"] = close.rolling(window=settings.SMA_SLOW).mean()
 
         # Adaptive Indicators
         atr_pct = (df["ATR"] / close) * 100
@@ -95,7 +96,7 @@ class MarketAnalyzer:
         df["Signal_Line"] = df["MACD"].ewm(span=9, adjust=False).mean()
 
         # Vectorized Bollinger Bands
-        std = close.rolling(window=config.SMA_FAST).std()
+        std = close.rolling(window=settings.SMA_FAST).std()
         df["BB_Upper"] = df["SMA_20"] + (std * 2.0)
         df["BB_Lower"] = df["SMA_20"] - (std * 2.0)
 
@@ -128,11 +129,11 @@ class MarketAnalyzer:
         df.loc[macd_cross_down, "Scalp_Signal"] -= 2
 
         # 2. Momentum signals
-        recent_high = df["High"].rolling(window=config.MOMENTUM_LOOKBACK).max()
-        avg_vol = df["Volume"].rolling(window=config.MOMENTUM_LOOKBACK).mean()
+        recent_high = df["High"].rolling(window=settings.MOMENTUM_LOOKBACK).max()
+        avg_vol = df["Volume"].rolling(window=settings.MOMENTUM_LOOKBACK).mean()
         df["Momentum_Signal"] = 0
         df.loc[
-            (df["Close"] > recent_high * config.MOMENTUM_PROXIMITY)
+            (df["Close"] > recent_high * settings.MOMENTUM_PROXIMITY)
             & (df["Volume"] > avg_vol * 1.3),
             "Momentum_Signal",
         ] = 2

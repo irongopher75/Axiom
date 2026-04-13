@@ -10,20 +10,24 @@ from datetime import datetime
 from pathlib import Path
 
 import uvicorn
+from app.core.config import settings, validate_config
+from app.services.risk_engine import RiskEngine
 from common_db.duckdb_client import DuckDBClient
 from common_services.news_client import NewsClient
 from common_services.symbols_manager import SymbolsManager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.services.risk_engine import RiskEngine
-from routers import ai, backtest, news, predict, quotes, search, symbols, terminal, trades, users
+from routers import ai, backtest, news, portfolio, predict, quotes, search, symbols, terminal, trades, users
 
 logger = logging.getLogger(__name__)
 
 # ── Lifecycle ──────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Validate production configuration
+    validate_config(settings)
+
     # Initialize DuckDB
     app.state.db = DuckDBClient(Path(app.state.data_dir) / "axiom.duckdb")
     await app.state.db.initialize()
@@ -33,10 +37,10 @@ async def lifespan(app: FastAPI):
     try:
         await app.state.news.connect()
     except Exception as e:
-        print(f"News Client failed to connect: {e}")
+        logger.error(f"News Client failed to connect: {e}")
 
     # Initialize Risk Engine
-    app.state.risk = RiskEngine()
+    # app.state.risk = RiskEngine() # Moved to on-demand or background thread if needed
 
     # Initialize Symbols Manager
     app.state.symbols = SymbolsManager(Path(app.state.data_dir) / "symbols.db")
@@ -51,25 +55,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AXIOM Sidecar", lifespan=lifespan)
 
 
-import os
-
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     tb = traceback.format_exc()
     logger.error(f"GLOBAL ERROR: {tb}")
-    
+
     content = {"detail": "Internal Server Error"}
-    if DEBUG:
+    if settings.DEBUG:
         content["traceback"] = tb
-        
+
     return JSONResponse(status_code=500, content=content)
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
@@ -79,6 +79,7 @@ app.add_middleware(
 app.include_router(predict.router, prefix="/api/v1/predict", tags=["ML"])
 app.include_router(backtest.router, prefix="/api/v1/backtest", tags=["Backtest"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analyst"])
+app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["Portfolio Metrics"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(news.router, prefix="/api/v1/news", tags=["News"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])

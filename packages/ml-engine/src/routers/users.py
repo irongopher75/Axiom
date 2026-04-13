@@ -5,8 +5,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.security import OAuth2PasswordRequestForm
-
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -69,7 +68,7 @@ async def get_watchlist(request: Request):
 
 @router.post("/watchlist/{symbol}")
 async def add_to_watchlist(
-    request: Request, 
+    request: Request,
     symbol: str = Path(..., pattern=r"^[A-Z0-9.-]{1,20}$")
 ):
     db = request.app.state.db
@@ -85,7 +84,7 @@ async def add_to_watchlist(
 
 @router.delete("/watchlist/{symbol}")
 async def remove_from_watchlist(
-    request: Request, 
+    request: Request,
     symbol: str = Path(..., pattern=r"^[A-Z0-9.-]{1,20}$")
 ):
     db = request.app.state.db

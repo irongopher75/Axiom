@@ -162,7 +162,7 @@ class NewsIntelligenceService:
                 finnhub, gdelt = await asyncio.gather(
                     self._fetch_finnhub(client), self._fetch_gdelt(client), return_exceptions=True
                 )
-            
+
             # Handle potential exceptions from gather
             articles = []
             if isinstance(finnhub, list): articles.extend(finnhub)

@@ -2,7 +2,9 @@ import asyncio
 import logging
 
 import yfinance as yf
-from fastapi import APIRouter, HTTPException, Query, Request
+import pandas as pd
+import numpy as np
+from fastapi import APIRouter, Query, Request
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ DEFAULT_TICKERS = {
 
 @router.get("/batch")
 async def get_batch_quotes(
-    request: Request, 
+    request: Request,
     symbols: str | None = Query(None, pattern=r"^[A-Z0-9.,-]{0,500}$")
 ):
     db = request.app.state.db
@@ -36,32 +38,38 @@ async def get_batch_quotes(
 
     if not requested:
         return {}
-    
+
     ticker_map = {DEFAULT_TICKERS.get(s, s): s for s in requested}
     tickers = list(ticker_map.keys())
 
     try:
         # Offload synchronous yfinance call to a background thread
+        # 2d period gives us today and yesterday for change calculation
         data = await asyncio.to_thread(
-            yf.download, tickers, period="2d", interval="1d", progress=False
+            yf.download, tickers, period="2d", interval="1d", progress=False, group_by="ticker"
         )
-        
+
         if data.empty:
             return {}
-            
-        close_data = data["Close"]
+
         results = {}
         for ticker, display_name in ticker_map.items():
             try:
-                # Handle both single and multiple ticker DataFrames
+                # In group_by="ticker", data is a MultiIndex DF: (Ticker, Price)
                 if len(tickers) > 1:
-                    series = close_data[ticker].dropna()
+                    ticker_data = data[ticker].dropna()
                 else:
-                    series = close_data.dropna()
-                
-                if not series.empty:
-                    price = float(series.iloc[-1])
-                    prev = float(series.iloc[-2]) if len(series) > 1 else price
+                    ticker_data = data.dropna()
+                    # Flatten if single ticker returned as MultiIndex
+                    if isinstance(ticker_data.columns, pd.MultiIndex):
+                        ticker_data.columns = ticker_data.columns.get_level_values(0)
+
+                if not ticker_data.empty:
+                    # Get the most recent two bars
+                    latest_bars = ticker_data.tail(2)
+                    price = float(latest_bars["Close"].iloc[-1])
+                    prev  = float(latest_bars["Close"].iloc[-2]) if len(latest_bars) > 1 else price
+                    
                     results[display_name] = {
                         "price": round(price, 2),
                         "prev_close": round(prev, 2),
@@ -69,7 +77,8 @@ async def get_batch_quotes(
                         "up": price >= prev,
                         "currency": "$" if not (ticker.endswith(".NS") or ticker.endswith(".BO")) else "₹",
                     }
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to process quote for {ticker}: {e}")
                 continue
         return results
     except Exception as e:
@@ -79,7 +88,7 @@ async def get_batch_quotes(
 
 @router.get("/history/{symbol}")
 async def get_history(
-    symbol: str, 
+    symbol: str,
     period: str = Query("1d", pattern=r"^\d+(d|mo|y)$"),
     interval: str = Query("5m", pattern=r"^\d+(m|h|d|wk|mo)$")
 ):
@@ -87,28 +96,47 @@ async def get_history(
     try:
         # Offload synchronous yfinance call to a background thread
         data = await asyncio.to_thread(
-            yf.download, ticker, period=period, interval=interval, progress=False
+            yf.download, ticker, period=period, interval=interval, progress=False, auto_adjust=True
         )
-        
+
         if data.empty:
             return []
-            
+
+        # If it's a MultiIndex (yf 0.2.x default for some symbols), 
+        # extract the ticker-specific dataframe if symbol is found in level 1
+        if isinstance(data.columns, pd.MultiIndex):
+            if ticker in data.columns.get_level_values(1):
+                data = data.xs(ticker, axis=1, level=1)
+            else:
+                # Fallback: just flatten if we can't find the specific ticker
+                data.columns = data.columns.get_level_values(0)
+
         result = []
         for ts, row in data.iterrows():
-            result.append(
-                {
-                    "time": int(ts.timestamp()),
-                    "open": float(row["Open"]),
-                    "high": float(row["High"]),
-                    "low": float(row["Low"]),
-                    "close": float(row["Close"]),
-                    "volume": int(row["Volume"]),
-                }
-            )
+            try:
+                # Final safeguard: ensure we have scalar floats
+                def _get_val(col):
+                    v = row[col]
+                    if isinstance(v, (pd.Series, np.ndarray)):
+                        return float(v.iloc[0]) if hasattr(v, 'iloc') else float(v[0])
+                    return float(v)
+
+                result.append(
+                    {
+                        "time": int(ts.timestamp()),
+                        "open": _get_val("Open"),
+                        "high": _get_val("High"),
+                        "low":  _get_val("Low"),
+                        "close":_get_val("Close"),
+                        "volume":int(_get_val("Volume")),
+                    }
+                )
+            except (TypeError, ValueError, KeyError, IndexError):
+                continue
+
         return result
     except Exception as e:
         logger.error(f"History fetch failed for {symbol}: {e}")
-        # Return empty list instead of crashing
         return []
 
 

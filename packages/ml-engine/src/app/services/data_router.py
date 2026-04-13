@@ -5,9 +5,10 @@ from typing import Any
 import pandas as pd
 import yfinance as yf
 
-from app.core import config
+from app.core.config import settings
 from app.utils.breeze_client import BreezeClient
 from app.utils.finnhub_client import FinnhubClient
+from app.utils.resilience import retry_on_failure
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +48,11 @@ class DataRouter:
     def _is_indian_market(self, symbol: str) -> bool:
         """Determines if the symbol belongs to NSE/BSE."""
         symbol = symbol.upper()
-        # Basic heuristic: .NS, .BO or typical Indian symbols if mapping exists
         if any(suffix in symbol for suffix in [".NS", ".BO"]):
             return True
-        # Check against ticker map or other heuristics if needed
         return False
 
+    @retry_on_failure(retries=3, delay=1, backoff=2)
     async def get_price_data(
         self, symbol: str, interval: str = "1h", period: str = "1mo"
     ) -> pd.DataFrame:
@@ -75,40 +75,50 @@ class DataRouter:
             df = await self._fetch_from_yfinance(symbol, interval, period)
         else:
             # 2. US/Global Markets -> Finnhub for real-time, yfinance for history
-            # For 1mo data, yfinance is often more robust on free tiers
             df = await self._fetch_from_yfinance(symbol, interval, period)
 
             # Enrich with real-time quote from Finnhub if requested interval is small
             if interval in ["1m", "5m", "15m", "1h"]:
                 quote = await self.finnhub.get_quote(symbol)
                 if quote and "c" in quote:
-                    # Append or update the last price with Finnhub's real-time data
                     new_row = pd.DataFrame(
                         [
                             {
-                                "Open": quote["o"],
-                                "High": quote["h"],
-                                "Low": quote["l"],
-                                "Close": quote["c"],
-                                "Volume": quote["v"],
+                                "Open": float(quote["o"]),
+                                "High": float(quote["h"]),
+                                "Low": float(quote["l"]),
+                                "Close": float(quote["c"]),
+                                "Volume": int(quote["v"]),
                                 "Datetime": pd.to_datetime("now", utc=True),
                             }
                         ]
                     ).set_index("Datetime")
-                    # Merge logic here (simple version: concat if time is newer)
                     df = pd.concat([df, new_row])
                     df = df[~df.index.duplicated(keep="last")]
 
         # Cache the result
         if not df.empty:
-            await self.cache.set(cache_key, df.to_json(), config.CACHE_TTL_PRICE)
+            await self.cache.set(cache_key, df.to_json(), settings.CACHE_TTL_PRICE)
 
         return df
 
+    @retry_on_failure(retries=2, delay=1)
     async def _fetch_from_yfinance(self, symbol: str, interval: str, period: str) -> pd.DataFrame:
         """Helper to fetch bulk data from yfinance asynchronously."""
-        ticker = yf.Ticker(symbol)
-        data = await asyncio.to_thread(ticker.history, period=period, interval=interval)
+        data = await asyncio.to_thread(
+            yf.download, symbol, period=period, interval=interval, progress=False, group_by="ticker"
+        )
+        
+        if data.empty:
+            return data
+
+        # Robust MultiIndex flattening (handles yfinance 0.2.x structures)
+        if isinstance(data.columns, pd.MultiIndex):
+            if symbol in data.columns.get_level_values(1):
+                data = data.xs(symbol, axis=1, level=1)
+            else:
+                data.columns = data.columns.get_level_values(0)
+        
         return data
 
     async def get_features(self, symbol: str, feature_key: str) -> Any:
@@ -117,4 +127,4 @@ class DataRouter:
 
     async def set_features(self, symbol: str, feature_key: str, value: Any):
         """Cache computed features."""
-        await self.cache.set(f"features:{symbol}:{feature_key}", value, config.CACHE_TTL_FEATURES)
+        await self.cache.set(f"features:{symbol}:{feature_key}", value, settings.CACHE_TTL_FEATURES)

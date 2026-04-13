@@ -6,8 +6,6 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
-
 from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter()
