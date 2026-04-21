@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     CACHE_TTL_PRICE: int = 300
     CACHE_TTL_FEATURES: int = 900
 
+    # --- Email & Notifications ---
+    SMTP_HOST: Optional[str] = Field(default=None, validation_alias="SMTP_HOST")
+    SMTP_PORT: int = Field(default=587, validation_alias="SMTP_PORT")
+    SMTP_USER: Optional[str] = Field(default=None, validation_alias="SMTP_USER")
+    SMTP_PASSWORD: Optional[str] = Field(default=None, validation_alias="SMTP_PASSWORD")
+    SMTP_FROM_EMAIL: str = Field(default="noreply@axiom.local", validation_alias="SMTP_FROM_EMAIL")
+    NEWS_SUMMARY_TIME: str = Field(default="09:00", validation_alias="NEWS_SUMMARY_TIME")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

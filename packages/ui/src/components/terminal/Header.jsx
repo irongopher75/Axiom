@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useTerminalStore from '../../store/useTerminalStore';
-import { getMe } from '../../api/index';
+import { getMe, logout } from '../../api/index';
 import { useNavigate } from 'react-router-dom';
 import { SidecarStatus } from '../Desktop/SidecarStatus';
 
@@ -105,9 +105,9 @@ const Header = ({ onCommandPalette }) => {
                         <span style={{ color: isLive ? '#00FF41' : '#555' }}>{isLive ? 'CONNECTED' : 'OFFLINE'}</span>
                     </div>
                     <div style={{ color: '#FFFFFF' }}>{time} IST</div>
-                    <span
-                        onClick={() => {
-                            localStorage.removeItem('token');
+                        <span
+                        onClick={async () => {
+                            await logout();
                             navigate('/login');
                         }}
                         style={{ color: '#FF2244', cursor: 'pointer', border: '1px solid #FF224433', padding: '2px 8px', fontSize: '10px', letterSpacing: '0.05em' }}

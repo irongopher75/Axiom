@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getMe, getPerformance, getActiveTrades, getTradeHistory, getSystemConfig } from '../api/index';
+import { getMe, getPerformance, getActiveTrades, getTradeHistory, getSystemConfig, getSessionToken } from '../api/index';
 
 const DataContext = createContext();
 
@@ -12,7 +12,7 @@ export const DataProvider = ({ children }) => {
     const [tradeHistory, setTradeHistory] = useState([]);
     const [systemConfig, setSystemConfig] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+    const [isAuthenticated, setIsAuthenticated] = useState(!!getSessionToken());
 
     // Global active asset state
     const [activeSymbol, setActiveSymbol] = useState('NIFTY');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { login, register } from '../api/index';
+import { getSessionToken, login, register } from '../api/index';
 import { Navigate } from 'react-router-dom';
 
 const Auth = () => {
@@ -13,7 +13,7 @@ const Auth = () => {
 
     useEffect(() => {
         // If already logged in, go straight to terminal
-        if (localStorage.getItem('token')) {
+        if (getSessionToken()) {
             setRedirectTo('/terminal');
         }
         const t = setInterval(() => setTick(new Date().toLocaleTimeString('en-IN', { hour12: false })), 1000);
@@ -31,7 +31,7 @@ const Auth = () => {
             } else {
                 await register(email, password);
                 setError('');
-                alert('Registration submitted. Awaiting admin approval.');
+                alert('Registration complete. If this is the first account, admin access is enabled automatically.');
                 setIsLogin(true);
             }
         } catch (err) {

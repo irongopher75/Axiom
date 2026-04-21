@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0a0a0c; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #121214; border: 1px solid #1f1f23; border-radius: 12px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #1a1a1e 0%, #0a0a0c 100%); padding: 30px; border-bottom: 2px solid #00ff41; text-align: center; }
+        .header h1 { margin: 0; color: #00ff41; font-size: 24px; letter-spacing: 2px; }
+        .content { padding: 30px; }
+        .news-item { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #1f1f23; }
+        .news-item:last-child { border-bottom: none; }
+        .category { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .headline { font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 10px; display: block; text-decoration: none; }
+        .headline:hover { color: #00ff41; }
+        .summary { font-size: 14px; line-height: 1.6; color: #b0b0b5; }
+        .meta { margin-top: 10px; font-size: 12px; color: #666; }
+        .sentiment { padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block; margin-right: 10px; }
+        .sentiment-bullish { color: #00ff41; background: rgba(0, 255, 65, 0.1); }
+        .sentiment-bearish { color: #ff2244; background: rgba(255, 34, 68, 0.1); }
+        .sentiment-neutral { color: #ffcc00; background: rgba(255, 204, 0, 0.1); }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #444; background: #0a0a0c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="main-title">AXIOM INTELLIGENCE</h1>
+            <p style="color: #666; margin-top: 5px;">Daily Market & Intelligence Briefing</p>
+        </div>
+        <div class="content">
+            <h2 style="color: #00ff41; font-size: 16px; border-left: 3px solid #00ff41; padding-left: 10px; margin-bottom: 25px;">SUMMARY FOR {{ report_date }}</h2>
+            
+            {% for item in news_items %}
+            <div class="news-item">
+                <div class="category">{{ item.category }}</div>
+                <a href="{{ item.url }}" class="headline">{{ item.headline }}</a>
+                <div class="summary">{{ item.summary }}</div>
+                <div class="meta">
+                    <span class="sentiment sentiment-{{ item.sentiment.lower() }}">{{ item.sentiment }}</span>
+                    <span>Source: {{ item.source }}</span> • <span>{{ item.published_fmt }}</span>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not news_items %}
+            <p style="text-align: center; color: #666;">No major updates for the previous day.</p>
+            {% endif %}
+        </div>
+        <div class="footer">
+            &copy; 2026 Axiom Advanced Trading Systems. This is an automated briefing.
+        </div>
+    </div>
+</body>
+</html>

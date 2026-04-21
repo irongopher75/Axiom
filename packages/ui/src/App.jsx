@@ -6,10 +6,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import LandingPage from './components/landing/LandingPage';
 import LogoReveal from './components/auth/LogoReveal';
 import { getMe } from './api/index';
+import { clearSessionToken, getSessionToken } from './api/index';
 import { UpdateNotification } from './components/Desktop/UpdateNotification';
 
 // ─── Auth State Helper ────────────────────────────────────────────────────────
-const getToken = () => localStorage.getItem('token');
+const getToken = () => getSessionToken();
 
 // ─── Protected Route Guard ────────────────────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
@@ -26,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
                 else setStatus('denied');
             })
             .catch(() => {
-                localStorage.removeItem('token');
+                clearSessionToken();
                 setStatus('denied');
             });
     }, []);

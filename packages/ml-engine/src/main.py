@@ -11,14 +11,17 @@ from pathlib import Path
 
 import uvicorn
 from app.core.config import settings, validate_config
+from app.services.daily_summary_service import DailyNewsSummaryService
 from app.services.risk_engine import RiskEngine
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from common_db.duckdb_client import DuckDBClient
 from common_services.news_client import NewsClient
 from common_services.symbols_manager import SymbolsManager
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from routers import ai, backtest, news, portfolio, predict, quotes, search, symbols, terminal, trades, users
+from routers import admin, ai, backtest, news, portfolio, predict, quotes, search, symbols, terminal, trades, users
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +49,26 @@ async def lifespan(app: FastAPI):
     app.state.symbols = SymbolsManager(Path(app.state.data_dir) / "symbols.db")
     await app.state.symbols.init_db()
 
+    # --- Scheduled Tasks ---
+    app.state.scheduler = AsyncIOScheduler()
+    summary_service = DailyNewsSummaryService(app.state.db)
+    
+    # Schedule at 9 AM (hour and minute from config)
+    hour, minute = settings.NEWS_SUMMARY_TIME.split(":")
+    app.state.scheduler.add_job(
+        summary_service.generate_and_send_summary,
+        CronTrigger(hour=int(hour), minute=int(minute)),
+        id="daily_news_summary",
+        replace_existing=True
+    )
+    
+    app.state.scheduler.start()
+    logger.info(f"Scheduler started. Daily news summary scheduled for {settings.NEWS_SUMMARY_TIME} daily.")
+
     print("AXIOM_READY", flush=True)
     yield
+    if hasattr(app.state, "scheduler"):
+        app.state.scheduler.shutdown()
     await app.state.db.close()
     await app.state.news.disconnect()
 
@@ -83,6 +104,7 @@ app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["Portfoli
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(news.router, prefix="/api/v1/news", tags=["News"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(trades.router, prefix="/api/v1/trades", tags=["Trades"])
 app.include_router(quotes.router, prefix="/api/v1/quotes", tags=["Quotes"])
 app.include_router(symbols.router, prefix="/api/v1/symbols", tags=["Symbols"])

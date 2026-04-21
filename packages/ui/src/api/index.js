@@ -4,19 +4,27 @@ import { config } from '../config/api';
 export const API_URL = config.apiBase;
 
 const api = axios.create({
+    withCredentials: false,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
+const TOKEN_KEY = 'axiom_session_token';
+
+export const getSessionToken = () => sessionStorage.getItem(TOKEN_KEY);
+export const clearSessionToken = () => sessionStorage.removeItem(TOKEN_KEY);
+
 // Ensure baseURL is always current with config (handles late injection from Electron)
 api.interceptors.request.use(
     (axiosConfig) => {
         axiosConfig.baseURL = config.apiBase;
-        
-        const token = localStorage.getItem('token');
+
+        const token = getSessionToken();
         if (token) {
             axiosConfig.headers['Authorization'] = `Bearer ${token}`;
+        } else if (axiosConfig.headers?.Authorization) {
+            delete axiosConfig.headers.Authorization;
         }
         return axiosConfig;
     },
@@ -24,12 +32,9 @@ api.interceptors.request.use(
 );
 
 export const getWsUrl = (clientId) => {
-    const token = localStorage.getItem('token');
-    const tokenQuery = token ? `?token=${token}` : '';
-    
     // config.wsBase is a dynamic getter
     const wsBase = config.wsBase.endsWith('/') ? config.wsBase.slice(0, -1) : config.wsBase;
-    return `${wsBase}/api/v1/ws/terminal/${clientId}${tokenQuery}`;
+    return `${wsBase}/api/v1/ws/terminal/${clientId}`;
 };
 
 // Interceptor to handle specific Sidecar error codes and Auth redirects
@@ -43,7 +48,7 @@ api.interceptors.response.use(
             if (status === 401 || status === 403) {
                 const isAuthPage = window.location.pathname === '/' || window.location.pathname === '/login';
                 if (!isAuthPage) {
-                    localStorage.removeItem('token');
+                    clearSessionToken();
                     window.location.href = '/';
                 }
             }
@@ -72,7 +77,7 @@ export const login = async (email, password) => {
         }
     });
     if (response.data.access_token) {
-        localStorage.setItem('token', response.data.access_token);
+        sessionStorage.setItem(TOKEN_KEY, response.data.access_token);
     }
     return response.data;
 };
@@ -83,6 +88,14 @@ export const register = async (email, password) => {
 
 export const getMe = async () => {
     return await api.get('/api/v1/users/me');
+};
+
+export const logout = async () => {
+    try {
+        await api.post('/api/v1/users/logout');
+    } finally {
+        clearSessionToken();
+    }
 };
 
 export const getQuoteHistory = async (symbol, interval = '5m', period = '1d') => {

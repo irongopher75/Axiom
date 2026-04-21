@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/index';
+import { logout } from '../api/index';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -61,8 +62,7 @@ const AdminDashboard = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        navigate('/login');
+        logout().finally(() => navigate('/login'));
     };
 
     const toggleRow = (userId) => {

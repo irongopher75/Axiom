@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { getMe } from '../api/index';
+import { clearSessionToken, getMe } from '../api/index';
 import LoadingScreen from './shared/LoadingScreen';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
                 }
                 setIsAuthorized(true);
             } catch (err) {
-                localStorage.removeItem('token');
+                clearSessionToken();
                 setShouldRedirect(true);
             } finally {
                 setIsLoading(false);

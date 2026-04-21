@@ -1,4 +1,5 @@
 import { getWsUrl } from './index';
+import { getSessionToken } from './index';
 
 /**
  * AxiomWSClient — Standalone event-driven WebSocket hub.
@@ -39,9 +40,14 @@ class AxiomWSClient {
 
         // Re-resolve URL at connect time to pick up injected config
         this.url = getWsUrl(this.clientId);
+        const token = getSessionToken();
+        if (!token) {
+            this.emit('connection_change', { status: 'AUTH_REQUIRED' });
+            return;
+        }
         
         console.log(`[AXIOM-WS] Connecting to terminal...`);
-        this.ws = new WebSocket(this.url);
+        this.ws = new WebSocket(this.url, ['axiom-v1', `bearer.${token}`]);
 
         this.ws.onopen = () => {
             console.log('[AXIOM-WS] Connection established.');

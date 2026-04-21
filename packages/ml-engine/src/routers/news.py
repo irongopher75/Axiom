@@ -4,7 +4,8 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, HTTPException
+from app.services.daily_summary_service import DailyNewsSummaryService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -32,3 +33,14 @@ async def get_news_feed(limit: int = 60):
             "category": "COMMODITIES",
         },
     ]
+
+@router.post("/test-summary")
+async def trigger_daily_summary(request: Request):
+    """Manually trigger the daily news summary email for testing."""
+    summary_service = DailyNewsSummaryService(request.app.state.db)
+    try:
+        await summary_service.generate_and_send_summary()
+        return {"status": "Summary generation triggered. Check logs/email."}
+    except Exception as e:
+        logger.error(f"Manual summary trigger failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

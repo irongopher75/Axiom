@@ -106,6 +106,15 @@ class DuckDBClient:
             ship_type   VARCHAR,
             geo_signal  VARCHAR
         );
+
+        -- Users for notifications
+        CREATE TABLE IF NOT EXISTS users (
+            email       VARCHAR PRIMARY KEY,
+            is_active   BOOLEAN DEFAULT TRUE,
+            is_approved BOOLEAN DEFAULT FALSE,
+            subscribed_to_news BOOLEAN DEFAULT TRUE,
+            created_at  TIMESTAMPTZ DEFAULT now()
+        );
     """
 
     def __init__(self, db_path: Path):
@@ -119,6 +128,23 @@ class DuckDBClient:
         # Use a single connection for the whole app
         self._conn = duckdb.connect(str(self.db_path))
         self._conn.execute(self.SCHEMA)
+        self._conn.execute(
+            """
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superuser BOOLEAN DEFAULT FALSE;
+            ALTER TABLE trades ADD COLUMN IF NOT EXISTS user_email VARCHAR;
+
+            CREATE TABLE IF NOT EXISTS user_watchlists (
+                user_email VARCHAR NOT NULL,
+                symbol VARCHAR NOT NULL,
+                added_at TIMESTAMPTZ DEFAULT now(),
+                PRIMARY KEY (user_email, symbol)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_trades_user_email ON trades (user_email);
+            CREATE INDEX IF NOT EXISTS idx_user_watchlists_user_email ON user_watchlists (user_email);
+            """
+        )
         logger.info(f"DuckDB initialized at {self.db_path}")
 
     def query(self, sql: str, params: list | None = None) -> pd.DataFrame:
