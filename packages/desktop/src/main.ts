@@ -7,13 +7,32 @@ import {
   Tray,
   Menu,
   nativeImage,
+  net,
+  protocol,
+  session,
 } from 'electron';
 import path from 'node:path';
+import http from 'node:http';
+import https from 'node:https';
 import { spawn, ChildProcess } from 'node:child_process';
+import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { Platform } from './platform';
 import { setupUpdater } from './updater';
 
 // ── App-level config ──────────────────────────────────────────
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+    },
+  },
+]);
+
 nativeTheme.themeSource = 'dark';
 app.setName('AXIOM');
 
@@ -25,6 +44,117 @@ let sidecarReady = false;
 let restartCount = 0;
 const MAX_RESTARTS = 5;
 const SIDECAR_PORT = 18432;
+const DEFAULT_RENDERER_URL = 'http://localhost:5173';
+const APP_INDEX_URL = 'app://./index.html';
+
+function getRendererRoot(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'renderer')
+    : path.join(__dirname, '../renderer');
+}
+
+function buildCsp(forDevServer: boolean): string {
+  const connectSources = [
+    "'self'",
+    `http://127.0.0.1:${SIDECAR_PORT}`,
+    `ws://127.0.0.1:${SIDECAR_PORT}`,
+  ];
+
+  if (forDevServer) {
+    connectSources.push(
+      'http://localhost:*',
+      'ws://localhost:*',
+      'http://127.0.0.1:*',
+      'ws://127.0.0.1:*',
+    );
+  }
+
+  return [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: https:",
+    `connect-src ${connectSources.join(' ')}`,
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+  ].join('; ');
+}
+
+function registerAppProtocol(): void {
+  protocol.handle('app', async (request) => {
+    const rendererRoot = getRendererRoot();
+    const requestUrl = new URL(request.url);
+    const requestedPath = decodeURIComponent(requestUrl.pathname);
+    const relativePath = requestedPath === '/' ? 'index.html' : requestedPath.replace(/^\/+/, '');
+    const candidatePath = path.resolve(rendererRoot, relativePath);
+    const normalizedRoot = path.resolve(rendererRoot);
+
+    if (!candidatePath.startsWith(normalizedRoot)) {
+      return new Response('Forbidden', { status: 403 });
+    }
+
+    let filePath = candidatePath;
+
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      const shouldServeIndex = path.extname(relativePath) === '';
+      if (!shouldServeIndex) {
+        return new Response('Not Found', { status: 404 });
+      }
+      filePath = path.join(normalizedRoot, 'index.html');
+    }
+
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
+}
+
+function installCsp(): void {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const isAppRequest = details.url.startsWith('app://');
+    const isDevRequest = details.url.startsWith('http://localhost:5173')
+      || details.url.startsWith('http://127.0.0.1:5173');
+
+    if (!isAppRequest && !isDevRequest) {
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
+
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [buildCsp(isDevRequest)],
+      },
+    });
+  });
+}
+
+function canReachRenderer(urlString: string, timeoutMs = 1500): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const target = new URL(urlString);
+      const client = target.protocol === 'https:' ? https : http;
+      const request = client.request(
+        target,
+        { method: 'GET', timeout: timeoutMs },
+        (response) => {
+          response.resume();
+          resolve((response.statusCode ?? 500) < 400);
+        },
+      );
+
+      request.on('timeout', () => {
+        request.destroy();
+        resolve(false);
+      });
+      request.on('error', () => resolve(false));
+      request.end();
+    } catch {
+      resolve(false);
+    }
+  });
+}
 
 // ── Sidecar ───────────────────────────────────────────────────
 function spawnSidecar(): Promise<void> {
@@ -165,9 +295,7 @@ async function createWindow(): Promise<void> {
       }
     });
 
-    await mainWindow.loadFile(
-      path.join(__dirname, '../renderer/index.html')
-    );
+    await mainWindow.loadURL(APP_INDEX_URL);
     
     // SECURITY: High-level menu lockdown
     const menu = Menu.buildFromTemplate([
@@ -179,10 +307,16 @@ async function createWindow(): Promise<void> {
     Menu.setApplicationMenu(menu);
 
   } else {
-    // Development: load from Vite dev server provided by electron-vite
-    const url = process.env['ELECTRON_RENDERER_URL'] || 'http://localhost:5173';
-    await mainWindow.loadURL(url);
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    const url = process.env['ELECTRON_RENDERER_URL'] || DEFAULT_RENDERER_URL;
+    const devServerReady = await canReachRenderer(url);
+
+    if (devServerReady) {
+      await mainWindow.loadURL(url);
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    } else {
+      console.warn(`[Renderer] Dev server unavailable at ${url}. Falling back to ${APP_INDEX_URL}.`);
+      await mainWindow.loadURL(APP_INDEX_URL);
+    }
   }
 
   mainWindow.on('closed', () => { mainWindow = null; });
@@ -285,6 +419,8 @@ function hadPreviousSession(): boolean {
 
 // ── Lifecycle ─────────────────────────────────────────────────
 app.whenReady().then(async () => {
+  registerAppProtocol();
+  installCsp();
   createTray();
 
   // Start sidecar — don't wait for ready before showing window
@@ -323,7 +459,8 @@ app.on('web-contents-created', (_, contents) => {
   contents.setWindowOpenHandler(() => ({ action: 'deny' }));
   contents.on('will-navigate', (event, url) => {
     const allowed = [
-      'http://localhost:5173',
+      DEFAULT_RENDERER_URL,
+      'http://127.0.0.1:5173',
       'http://127.0.0.1:18432',
       'app://',
     ];

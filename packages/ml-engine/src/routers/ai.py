@@ -13,6 +13,7 @@ from pydantic import BaseModel
 import re
 import logging
 
+from app.utils.fallback_cache import load_cached_payload, save_cached_payload
 from market_analyzer import MarketAnalyzer
 
 logger   = logging.getLogger(__name__)
@@ -22,6 +23,18 @@ limiter  = Limiter(key_func=get_remote_address)
 
 # Cache: ticker → AnalysisResult, TTL = 5 minutes (300 seconds)
 _analysis_cache: TTLCache = TTLCache(maxsize=256, ttl=300)
+FALLBACK_ANALYSIS = {
+    "AAPL": {
+        "ticker": "AAPL",
+        "current_price": 185.25,
+        "support": 181.0,
+        "resistance": 188.5,
+        "volatility": "MODERATE",
+        "verdict": "NEUTRAL",
+        "confidence": 0.58,
+        "indicators": {"rsi": 52.0, "atr_pct": 1.8},
+    }
+}
 
 
 # ------------------------------------------------------------------ #
@@ -56,21 +69,35 @@ def _extract_ticker(text: str) -> str | None:
     return None
 
 
-def _cached_analyze(ticker: str) -> dict:
+def _cached_analyze(request: Request, ticker: str) -> dict:
     """Return cached analysis or fetch fresh."""
     if ticker in _analysis_cache:
         return _analysis_cache[ticker]
-    result = MarketAnalyzer(ticker).analyze()
-    payload = {
-        "ticker":       result.ticker,
-        "current_price":result.current_price,
-        "support":      result.support,
-        "resistance":   result.resistance,
-        "volatility":   result.volatility,
-        "verdict":      result.verdict,
-        "confidence":   result.confidence,
-        "indicators":   result.indicators,
-    }
+    try:
+        result = MarketAnalyzer(ticker).analyze()
+        payload = {
+            "ticker":       result.ticker,
+            "current_price":result.current_price,
+            "support":      result.support,
+            "resistance":   result.resistance,
+            "volatility":   result.volatility,
+            "verdict":      result.verdict,
+            "confidence":   result.confidence,
+            "indicators":   result.indicators,
+        }
+        save_cached_payload(request.app.state.data_dir, "ai-analyze", ticker, payload)
+    except Exception:
+        cached = load_cached_payload(request.app.state.data_dir, "ai-analyze", ticker)
+        if cached:
+            payload = cached["payload"] | {
+                "is_fallback_data": True,
+                "cached_at": cached.get("cached_at"),
+            }
+        else:
+            fallback = FALLBACK_ANALYSIS.get(ticker)
+            if not fallback:
+                raise
+            payload = fallback | {"is_fallback_data": True}
     _analysis_cache[ticker] = payload
     return payload
 
@@ -105,7 +132,7 @@ async def analyze(ticker: str, request: Request):
         raise HTTPException(status_code=400, detail="Invalid ticker symbol")
 
     try:
-        return _cached_analyze(ticker)
+        return _cached_analyze(request, ticker)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:
@@ -150,7 +177,7 @@ async def chat(body: ChatRequest, request: Request):
 
     if ticker:
         try:
-            data = _cached_analyze(ticker)
+            data = _cached_analyze(request, ticker)
         except Exception as exc:
             return {
                 "reply": (

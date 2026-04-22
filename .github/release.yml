@@ -1,0 +1,27 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+  categories:
+    - title: Desktop
+      labels:
+        - desktop
+        - electron
+    - title: Trading
+      labels:
+        - trading
+        - portfolio
+    - title: UI
+      labels:
+        - ui
+        - frontend
+    - title: ML Engine
+      labels:
+        - ml-engine
+        - backend
+    - title: Security
+      labels:
+        - security
+    - title: Other Changes
+      labels:
+        - "*"

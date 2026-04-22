@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.sidecar_auth import SidecarUser
+from app.utils.response_sanitizer import sanitize_record, sanitize_records
 from routers.users import get_current_active_user
 
 router = APIRouter()
@@ -32,7 +33,7 @@ async def get_active_trades(
             "SELECT * FROM trades WHERE status = 'OPEN' AND user_email = ?",
             [current_user.email],
         )
-        return df.to_dict(orient="records")
+        return sanitize_records(df.to_dict(orient="records"))
     except Exception as e:
         logger.error(f"Error fetching active trades: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch active trades.")
@@ -48,7 +49,7 @@ async def get_trade_history(
             "SELECT * FROM trades WHERE status = 'CLOSED' AND user_email = ? ORDER BY exit_timestamp DESC",
             [current_user.email],
         )
-        return df.to_dict(orient="records")
+        return sanitize_records(df.to_dict(orient="records"))
     except Exception as e:
         logger.error(f"Error fetching trade history: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch trade history.")
@@ -122,7 +123,7 @@ async def execute_trade(
         df = db.query("SELECT * FROM trades WHERE id = ? AND user_email = ?", [trade_id, current_user.email])
         if df.empty:
              raise HTTPException(status_code=500, detail="Trade execution confirmation failed.")
-        return df.iloc[0].to_dict()
+        return sanitize_record(df.iloc[0].to_dict())
     except HTTPException:
         raise
     except Exception as e:

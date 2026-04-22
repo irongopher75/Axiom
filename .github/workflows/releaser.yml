@@ -1,42 +1,56 @@
-name: Build/Release (AXIOM Desktop)
+name: GitHub Release
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  release-macos:
+    name: Build And Publish macOS Release
     runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CSC_LINK: ${{ secrets.MAC_CERTS }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      AXIOM_NEWS_WS_URL: ${{ secrets.AXIOM_NEWS_WS_URL }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Download Python Runtime
-        run: node packages/desktop/scripts/download-python-runtime.js
+      - name: Download bundled Python runtime
+        run: npm run setup:python
 
-      - name: Build UI (Renderer)
-        run: npm run build:desktop --workspace=packages/ui
+      - name: Build desktop renderer
+        run: npm run build:ui:desktop
 
-      - name: Build and Release Electron App
-        uses: samuelmeuli/action-electron-builder@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release: true
-          # Mac Notarization Secrets
-          mac_certs: ${{ secrets.MAC_CERTS }}
-          mac_certs_password: ${{ secrets.MAC_CERTS_PASSWORD }}
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          AXIOM_NEWS_WS_URL: ${{ secrets.AXIOM_NEWS_WS_URL }}
+      - name: Build Electron main and preload bundles
+        run: npm run build:desktop:main
+
+      - name: Publish release artifacts to GitHub Releases
+        run: npm run dist --workspace=packages/desktop
+

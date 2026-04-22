@@ -5,6 +5,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from fastapi import APIRouter, Query, Request
+from app.utils.fallback_cache import load_cached_payload, save_cached_payload
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -19,6 +20,15 @@ DEFAULT_TICKERS = {
     "BTC-USD": "BTC-USD",
 }
 
+FALLBACK_QUOTES = {
+    "NIFTY": {"price": 22450.15, "prev_close": 22380.10, "currency": "₹"},
+    "SENSEX": {"price": 73810.22, "prev_close": 73690.55, "currency": "₹"},
+    "RELIANCE": {"price": 2950.40, "prev_close": 2938.10, "currency": "₹"},
+    "TCS": {"price": 3898.20, "prev_close": 3875.80, "currency": "₹"},
+    "AAPL": {"price": 185.25, "prev_close": 184.10, "currency": "$"},
+    "BTC-USD": {"price": 64250.0, "prev_close": 63820.0, "currency": "$"},
+}
+
 
 @router.get("/batch")
 async def get_batch_quotes(
@@ -26,6 +36,7 @@ async def get_batch_quotes(
     symbols: str | None = Query(None, pattern=r"^[A-Z0-9.,-]{0,500}$")
 ):
     db = request.app.state.db
+    cache_key = f"symbols={symbols or ''}"
     if symbols:
         requested = symbols.split(",")
     else:
@@ -80,19 +91,46 @@ async def get_batch_quotes(
             except Exception as e:
                 logger.warning(f"Failed to process quote for {ticker}: {e}")
                 continue
+        if results:
+            save_cached_payload(request.app.state.data_dir, "quotes-batch", cache_key, results)
         return results
     except Exception as e:
         logger.error(f"Quote batch fetch failed: {e}")
-        return {}
+        cached = load_cached_payload(request.app.state.data_dir, "quotes-batch", cache_key)
+        if cached:
+            payload = cached["payload"]
+            for quote in payload.values():
+                if isinstance(quote, dict):
+                    quote["stale"] = True
+                    quote["cached_at"] = cached.get("cached_at")
+            return payload
+        results = {}
+        for symbol in requested:
+            quote = FALLBACK_QUOTES.get(symbol)
+            if not quote:
+                continue
+            price = quote["price"]
+            prev = quote["prev_close"]
+            results[symbol] = {
+                "price": round(price, 2),
+                "prev_close": round(prev, 2),
+                "change_pct": round(((price - prev) / prev) * 100, 2) if prev else 0.0,
+                "up": price >= prev,
+                "currency": quote["currency"],
+                "stale": True,
+            }
+        return results
 
 
 @router.get("/history/{symbol}")
 async def get_history(
+    request: Request,
     symbol: str,
     period: str = Query("1d", pattern=r"^\d+(d|mo|y)$"),
     interval: str = Query("5m", pattern=r"^\d+(m|h|d|wk|mo)$")
 ):
     ticker = DEFAULT_TICKERS.get(symbol.upper(), symbol.upper())
+    cache_key = f"{symbol.upper()}::{period}::{interval}"
     try:
         # Offload synchronous yfinance call to a background thread
         data = await asyncio.to_thread(
@@ -100,7 +138,7 @@ async def get_history(
         )
 
         if data.empty:
-            return []
+            raise ValueError("No market data returned")
 
         # If it's a MultiIndex (yf 0.2.x default for some symbols), 
         # extract the ticker-specific dataframe if symbol is found in level 1
@@ -134,10 +172,29 @@ async def get_history(
             except (TypeError, ValueError, KeyError, IndexError):
                 continue
 
+        if result:
+            save_cached_payload(request.app.state.data_dir, "quotes-history", cache_key, result)
         return result
     except Exception as e:
         logger.error(f"History fetch failed for {symbol}: {e}")
-        return []
+        cached = load_cached_payload(request.app.state.data_dir, "quotes-history", cache_key)
+        if cached:
+            payload = cached["payload"]
+            if payload:
+                payload[-1]["stale"] = True
+                payload[-1]["cached_at"] = cached.get("cached_at")
+            return payload
+        return [
+            {
+                "time": 1713657600,
+                "open": 184.0,
+                "high": 186.0,
+                "low": 183.5,
+                "close": 185.25,
+                "volume": 1000000,
+                "stale": True,
+            }
+        ]
 
 
 @router.get("/macro/yields")

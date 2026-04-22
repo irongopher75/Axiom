@@ -1,7 +1,9 @@
-import { ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, AlertCircle, Search, ChevronDown } from 'lucide-react';
-import { executeManualTrade, getSymbols } from '../../api/index';
+import { ShoppingBag, ArrowUpRight, ArrowDownRight, Clock, AlertCircle, Search, ChevronDown, FileSpreadsheet } from 'lucide-react';
+import { executeManualTrade } from '../../api/index';
 import { useData } from '../../context/DataContext';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import useTerminalStore from '../../store/useTerminalStore';
+import { exportTradesWorkbook } from '../../utils/tradeWorkbook';
 
 const getExchangeInfo = (symbol) => {
     if (symbol?.endsWith('.BO')) return { label: 'BSE', currency: '₹' };
@@ -12,10 +14,11 @@ const getExchangeInfo = (symbol) => {
 };
 
 const TradingTerminal = ({ symbol, currentPrice, onTradeSuccess }) => {
-    const { systemConfig, setActiveSymbol, activeExchange } = useData();
+    const { systemConfig, setActiveSymbol, tradeHistory, activeTrades, performance, user } = useData();
     const [quantity, setQuantity] = useState(1);
     const [price, setPrice] = useState(currentPrice);
     const [loading, setLoading] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const [error, setError] = useState(null);
     const [status, setStatus] = useState(null);
 
@@ -61,14 +64,6 @@ const TradingTerminal = ({ symbol, currentPrice, onTradeSuccess }) => {
         return () => window.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const getSimilarStocks = (query) => {
-        if (!query) return [];
-        return stockDatabase.filter(s =>
-            s.symbol.toLowerCase().includes(query.toLowerCase()) ||
-            s.name?.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 5); // Limit for terminal view
-    };
-
     const handleSelectStock = (s) => {
         setActiveSymbol(s);
         setSearchQuery('');
@@ -82,17 +77,42 @@ const TradingTerminal = ({ symbol, currentPrice, onTradeSuccess }) => {
     const handleTrade = async (side) => {
         setLoading(true);
         setError(null);
+        setStatus(null);
         try {
             await executeManualTrade(symbol, side, quantity, parseFloat(price));
             if (onTradeSuccess) onTradeSuccess();
             // Reset quantity after success
             setQuantity(1);
+            setStatus(`${side} order routed successfully.`);
         } catch (err) {
             setError(err.response?.data?.detail || "Trade execution failed.");
         } finally {
             setLoading(false);
         }
     };
+
+    const handleExport = async () => {
+        setExporting(true);
+        setError(null);
+        setStatus(null);
+
+        try {
+            const fileName = exportTradesWorkbook({
+                userEmail: user?.email,
+                activeTrades,
+                tradeHistory,
+                performance,
+            });
+            setStatus(`Trade workbook downloaded as ${fileName}. Open it in Numbers for the full breakdown.`);
+        } catch (err) {
+            console.error('Trade export failed:', err);
+            setError('Trade export failed. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const totalTrades = (tradeHistory?.length || 0) + (activeTrades?.length || 0);
 
     return (
         <div className="glass-card rounded-[2.5rem] p-8 border-white/5 flex flex-col gap-6 relative overflow-hidden group">
@@ -184,6 +204,13 @@ const TradingTerminal = ({ symbol, currentPrice, onTradeSuccess }) => {
                     </div>
                 )}
 
+                {status && (
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3 text-blue-300 text-[10px] font-bold uppercase leading-tight">
+                        <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                        {status}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 pt-4">
                     <button
                         onClick={() => handleTrade('BUY')}
@@ -200,6 +227,30 @@ const TradingTerminal = ({ symbol, currentPrice, onTradeSuccess }) => {
                     >
                         {loading ? <Clock className="w-4 h-4 animate-spin" /> : <ArrowDownRight className="w-4 h-4" />}
                         Sell {symbol}
+                    </button>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Numbers Export</div>
+                            <div className="text-[10px] text-gray-400 leading-relaxed mt-1">
+                                Export every trade into dedicated sheets with overview, symbol analysis, and monthly performance.
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] font-black text-white">{totalTrades}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-gray-600">tracked trades</div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleExport}
+                        disabled={exporting || totalTrades === 0}
+                        className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-premium active:scale-95 disabled:opacity-30 flex items-center justify-center gap-2 border border-white/10"
+                    >
+                        {exporting ? <Clock className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 text-emerald-400" />}
+                        Export To Numbers
                     </button>
                 </div>
             </div>

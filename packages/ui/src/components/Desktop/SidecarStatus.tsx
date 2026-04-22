@@ -12,6 +12,13 @@ export function SidecarStatus() {
     // Only run on desktop
     if (!config.isDesktop || !window.axiomDesktop) return;
 
+    // Initial check in case we missed the signal
+    fetch(`${config.apiBase}/health`)
+      .then(res => {
+        if (res.ok) setStatus('ready');
+      })
+      .catch(() => {});
+
     // Listen to window.axiomDesktop.onSidecarStatus
     const unsubscribe = window.axiomDesktop.onSidecarStatus((s: { status: string }) => {
       setStatus(s.status as any);

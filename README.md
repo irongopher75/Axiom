@@ -20,12 +20,36 @@ Production-grade, Mac-first, Electron + Python sidecar.
 ## Building & Packaging
 
 ```bash
-# Build the UI
-npm run build:ui
+# Build the desktop renderer
+npm run build:ui:desktop
 
-# Package the DMG
-npm run build:desktop
+# Bundle Electron main/preload
+npm run build:desktop:main
+
+# Package the macOS app
+npm run dist
 ```
+
+## GitHub Releases
+
+AXIOM now includes a GitHub Releases workflow at [.github/workflows/releaser.yml](/Users/vishnupanicker/Documents/GitHub/Axiom/.github/workflows/releaser.yml:1).
+
+To publish a release:
+
+1. Bump the desktop version in [packages/desktop/package.json](/Users/vishnupanicker/Documents/GitHub/Axiom/packages/desktop/package.json:1).
+2. Push a tag like `v1.0.1`.
+3. GitHub Actions will build the macOS artifacts and publish them to the repository's Releases page.
+
+Recommended repository secrets:
+
+- `MAC_CERTS`
+- `MAC_CERTS_PASSWORD`
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `APPLE_TEAM_ID`
+- `AXIOM_NEWS_WS_URL`
+
+Release note categories are configured in [.github/release.yml](/Users/vishnupanicker/Documents/GitHub/Axiom/.github/release.yml:1).
 
 ## Local Stores
 

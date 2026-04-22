@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline, CircleMarker } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import useTerminalStore from '../../store/useTerminalStore';
+import { getSessionToken } from '../../api';
 
 const LandingPage = () => {
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ const LandingPage = () => {
 
     // Connect to streams for real stats
     useEffect(() => {
-        if (!isLive) connect();
+        if (!isLive && getSessionToken()) connect();
     }, [isLive, connect]);
 
     // Current counts from terminal store - STRICTLY REAL DATA

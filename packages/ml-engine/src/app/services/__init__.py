@@ -1,14 +1,16 @@
 from . import (
-    ais_service,
-    aviation_service,
+    ai_auditor,
     backtester,
+    daily_summary_service,
     data_manager,
     data_router,
     execution_engine,
+    mail_service,
     ml_engine,
     news_service,
     opensky_service,
     risk_engine,
+    satellite_service,
     trading_manager,
     websocket_manager,
 )

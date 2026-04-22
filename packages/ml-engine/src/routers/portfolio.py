@@ -21,6 +21,7 @@ import yfinance as yf
 import logging
 from typing import Optional
 
+from app.utils.fallback_cache import load_cached_payload, save_cached_payload
 from backtester import get_risk_free_rate
 
 logger   = logging.getLogger(__name__)
@@ -34,6 +35,15 @@ _metrics_cache: TTLCache = TTLCache(maxsize=64, ttl=300)
 BENCHMARK    = "SPY"
 LOOKBACK     = "1y"
 TRADING_DAYS = 252
+
+FALLBACK_PRICES = {
+    "AAPL": 185.0,
+    "RELIANCE": 2950.0,
+    "TCS": 3900.0,
+    "NIFTY": 22450.0,
+    "SENSEX": 73800.0,
+    "SPY": 515.0,
+}
 
 
 # ------------------------------------------------------------------ #
@@ -73,6 +83,15 @@ def _fetch_prices(tickers: list[str]) -> pd.DataFrame:
     return prices
 
 
+def _fallback_prices(tickers: list[str]) -> pd.DataFrame:
+    index = pd.date_range(end=pd.Timestamp.utcnow().floor("D"), periods=30, freq="D")
+    data = {}
+    for ticker in list(set(tickers + [BENCHMARK])):
+        base = FALLBACK_PRICES.get(ticker.upper(), 100.0)
+        data[ticker] = np.linspace(base * 0.98, base, len(index))
+    return pd.DataFrame(data, index=index)
+
+
 def _portfolio_daily_returns(
     prices: pd.DataFrame,
     holdings: list[Holding],
@@ -89,7 +108,7 @@ def _portfolio_daily_returns(
         if sym not in prices.columns:
             logger.warning("Ticker %s not found in price data — skipping", sym)
             continue
-        portfolio_value += h.quantity * prices[sym].fillna(method="ffill")
+        portfolio_value += h.quantity * prices[sym].ffill()
 
     daily_returns = portfolio_value.pct_change().dropna()
     return daily_returns, portfolio_value
@@ -184,19 +203,41 @@ async def portfolio_metrics(body: MetricsRequest, request: Request):
     ))
     if cache_key in _metrics_cache:
         return _metrics_cache[cache_key]
+    persistent_cache_key = repr(cache_key)
 
     try:
+        used_fallback = False
         prices = _fetch_prices(tickers)
+        if prices.empty:
+            cached = load_cached_payload(request.app.state.data_dir, "portfolio-metrics", persistent_cache_key)
+            if cached:
+                payload = cached["payload"] | {
+                    "is_fallback_data": True,
+                    "cached_at": cached.get("cached_at"),
+                }
+                _metrics_cache[cache_key] = payload
+                return payload
+            prices = _fallback_prices(tickers)
+            used_fallback = True
     except Exception as exc:
-        logger.exception("Price fetch failed")
-        raise HTTPException(status_code=502,
-                            detail=f"Failed to fetch price data: {exc}")
+        logger.warning("Price fetch failed, using cached or fallback prices: %s", exc)
+        cached = load_cached_payload(request.app.state.data_dir, "portfolio-metrics", persistent_cache_key)
+        if cached:
+            payload = cached["payload"] | {
+                "is_fallback_data": True,
+                "cached_at": cached.get("cached_at"),
+            }
+            _metrics_cache[cache_key] = payload
+            return payload
+        prices = _fallback_prices(tickers)
+        used_fallback = True
 
     # Validate at least one ticker resolved
     resolved = [t for t in tickers if t in prices.columns]
     if not resolved:
-        raise HTTPException(status_code=404,
-                            detail="None of the provided tickers returned price data")
+        prices = _fallback_prices(tickers)
+        resolved = [t for t in tickers if t in prices.columns]
+        used_fallback = True
 
     risk_free_rate = get_risk_free_rate()
 
@@ -235,7 +276,10 @@ async def portfolio_metrics(body: MetricsRequest, request: Request):
         "risk_free_rate":    round(risk_free_rate,      4),
         "benchmark":         BENCHMARK,
         "tickers_resolved":  resolved,
+        "is_fallback_data":  used_fallback,
     }
 
+    if not used_fallback:
+        save_cached_payload(request.app.state.data_dir, "portfolio-metrics", persistent_cache_key, result)
     _metrics_cache[cache_key] = result
     return result

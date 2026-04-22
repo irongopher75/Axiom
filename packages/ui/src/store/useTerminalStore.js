@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import api from "../api";
+import { getSessionToken } from "../api";
 import wsClient from "../api/wsClient";
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+import { config } from "../config/api";
 
 // ------------------------------------------------------------------ //
 //  Helpers                                                             //
@@ -17,7 +17,7 @@ async function fetchPortfolioMetrics(holdings) {
     return null;
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/portfolio/metrics`, {
+  const response = await fetch(`${config.apiBase}/api/v1/portfolio/metrics`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ holdings }),
@@ -201,6 +201,12 @@ const useTerminalStore = create((set, get) => ({
   // ---- WebSocket Connectivity -------------------------------------- //
   connect: async (forceRefresh = false) => {
     if (!forceRefresh && (get().isLive || get()._connected)) return;
+    const token = getSessionToken();
+    if (!token) {
+      set({ _connected: false, isLive: false });
+      return;
+    }
+
     set({ _connected: true });
 
     // Pre-seed and fetch initial data
@@ -248,7 +254,7 @@ const useTerminalStore = create((set, get) => ({
     const key = ticker.toUpperCase();
     if (analysisCache[key]) return analysisCache[key];
 
-    const response = await fetch(`${API_BASE}/api/v1/ai/analyze/${key}`);
+    const response = await fetch(`${config.apiBase}/api/v1/ai/analyze/${key}`);
     const data = await response.json();
     set((s) => ({ analysisCache: { ...s.analysisCache, [key]: data } }));
     return data;

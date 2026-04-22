@@ -18,9 +18,11 @@ logger = logging.getLogger(__name__)
 @router.get("/symbols/{exchange}")
 async def get_exchange_symbols(
     request: Request,
-    exchange: str = Path(..., pattern=r"^(nse|bse|nasdaq|nyse)$")
+    exchange: str = Path(..., pattern=r"^(nse|bse|nasdaq|nyse|us)$")
 ):
     exchange = exchange.upper()
+    if exchange == "US":
+        exchange = "NASDAQ"
     symbols_mgr = request.app.state.symbols
     
     try:
