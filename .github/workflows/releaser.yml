@@ -62,9 +62,9 @@ jobs:
       - name: Install Python sidecar dependencies
         run: |
           cd packages/ml-engine
-          python -m venv venv
-          ./venv/bin/pip install --upgrade pip
-          ./venv/bin/pip install -r requirements.txt
+          python3 -m venv venv
+          ./venv/bin/pip3 install --upgrade pip
+          ./venv/bin/pip3 install -r requirements.txt
 
       # Tauri requires the sidecar binary to exist at
       # src-tauri/<name>-<target> before bundling.
