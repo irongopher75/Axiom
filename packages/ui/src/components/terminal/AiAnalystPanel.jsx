@@ -1,13 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import useTerminalStore from '../../store/useTerminalStore';
 import { config } from '../../config/api';
 
 const AiAnalystPanel = () => {
-    const activeSymbol = useTerminalStore(state => state.activeSymbol);
-    const portfolio = useTerminalStore(state => state.portfolio);
-    const getPortfolioMetrics = useTerminalStore(state => state.getPortfolioMetrics);
-    const equityPrices = useTerminalStore(state => state.equityPrices);
-
     const [messages, setMessages] = useState([
         { role: 'assistant', content: 'QUANTITATIVE INSIGHT ENGINE [ONLINE]\n\nI am an independent market analyzer powered by pure mathematical indicators. I have direct access to your live portfolio, risk metrics, and local ML data streams. Mention a ticker (e.g. $AAPL) for a technical breakdown.' }
     ]);

@@ -5,6 +5,9 @@ from fastapi import APIRouter, Query, Request
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# All exchanges understood by this terminal
+SUPPORTED_EXCHANGES = ["NSE", "BSE", "NASDAQ", "NYSE", "TSE"]
+
 
 @router.get("/search")
 async def search_symbols(
@@ -51,3 +54,32 @@ async def get_stats(request: Request):
     except Exception as e:
         logger.error(f"Failed to get database stats: {e}")
         return {"total_symbols": 0}
+
+
+@router.get("/list")
+async def list_symbols(
+    request: Request,
+    exchange: str = Query("NASDAQ", pattern=r"^[A-Z]{2,6}$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=10, le=200),
+):
+    """
+    Paginated listing of all symbols for a given exchange.
+    Returns symbol metadata (no live prices — use /quotes/batch for pricing).
+    """
+    try:
+        symbols_manager = request.app.state.symbols
+        offset = (page - 1) * page_size
+        symbols = await symbols_manager.list_symbols(exchange=exchange, limit=page_size, offset=offset)
+        total = await symbols_manager.count_symbols(exchange=exchange)
+        return {
+            "exchange": exchange,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": (total + page_size - 1) // page_size,
+            "symbols": symbols,
+        }
+    except Exception as e:
+        logger.error(f"Failed to list symbols for {exchange}: {e}")
+        return {"exchange": exchange, "page": page, "page_size": page_size, "total": 0, "total_pages": 0, "symbols": []}

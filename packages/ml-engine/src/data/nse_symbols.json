@@ -1,7 +1,362 @@
 [
-    {"symbol": "RELIANCE", "name": "Reliance Industries Ltd."},
-    {"symbol": "TCS", "name": "Tata Consultancy Services Ltd."},
-    {"symbol": "HDFCBANK", "name": "HDFC Bank Ltd."},
-    {"symbol": "INFY", "name": "Infosys Ltd."},
-    {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd."}
+  {
+    "symbol": "RELIANCE.NS",
+    "name": "Reliance Industries",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TCS.NS",
+    "name": "Tata Consultancy Services",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HDFCBANK.NS",
+    "name": "HDFC Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ICICIBANK.NS",
+    "name": "ICICI Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "INFY.NS",
+    "name": "Infosys",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HINDUNILVR.NS",
+    "name": "Hindustan Unilever",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BHARTIARTL.NS",
+    "name": "Bharti Airtel",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "KOTAKBANK.NS",
+    "name": "Kotak Mahindra Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LT.NS",
+    "name": "Larsen & Toubro",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AXISBANK.NS",
+    "name": "Axis Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BAJFINANCE.NS",
+    "name": "Bajaj Finance",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ASIANPAINT.NS",
+    "name": "Asian Paints",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MARUTI.NS",
+    "name": "Maruti Suzuki",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SUNPHARMA.NS",
+    "name": "Sun Pharmaceutical",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "WIPRO.NS",
+    "name": "Wipro",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ULTRACEMCO.NS",
+    "name": "UltraTech Cement",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TITAN.NS",
+    "name": "Titan Company",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NESTLEIND.NS",
+    "name": "Nestle India",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "POWERGRID.NS",
+    "name": "Power Grid Corp",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NTPC.NS",
+    "name": "NTPC",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ONGC.NS",
+    "name": "Oil & Natural Gas Corp",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "COALINDIA.NS",
+    "name": "Coal India",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SBIN.NS",
+    "name": "State Bank of India",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "M&M.NS",
+    "name": "Mahindra & Mahindra",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HCLTECH.NS",
+    "name": "HCL Technologies",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TECHM.NS",
+    "name": "Tech Mahindra",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BAJAJ-AUTO.NS",
+    "name": "Bajaj Auto",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DRREDDY.NS",
+    "name": "Dr Reddy Labs",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GRASIM.NS",
+    "name": "Grasim Industries",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "INDUSINDBK.NS",
+    "name": "IndusInd Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TATACONSUM.NS",
+    "name": "Tata Consumer Products",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "JSWSTEEL.NS",
+    "name": "JSW Steel",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TATASTEEL.NS",
+    "name": "Tata Steel",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ADANIENT.NS",
+    "name": "Adani Enterprises",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ADANIPORTS.NS",
+    "name": "Adani Ports",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CIPLA.NS",
+    "name": "Cipla",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DIVISLAB.NS",
+    "name": "Divi Laboratories",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "EICHERMOT.NS",
+    "name": "Eicher Motors",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BPCL.NS",
+    "name": "BPCL",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HEROMOTOCO.NS",
+    "name": "Hero MotoCorp",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "IOC.NS",
+    "name": "Indian Oil Corporation",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TATAMOTORS.NS",
+    "name": "Tata Motors",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HINDALCO.NS",
+    "name": "Hindalco Industries",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "APOLLOHOSP.NS",
+    "name": "Apollo Hospitals",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BRITANNIA.NS",
+    "name": "Britannia Industries",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "UPL.NS",
+    "name": "UPL",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SBILIFE.NS",
+    "name": "SBI Life Insurance",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HDFCLIFE.NS",
+    "name": "HDFC Life Insurance",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BAJAJFINSV.NS",
+    "name": "Bajaj Finserv",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PIDILITIND.NS",
+    "name": "Pidilite Industries",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "VEDL.NS",
+    "name": "Vedanta",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AUROPHARMA.NS",
+    "name": "Aurobindo Pharma",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BIOCON.NS",
+    "name": "Biocon",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MUTHOOTFIN.NS",
+    "name": "Muthoot Finance",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PNB.NS",
+    "name": "Punjab National Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BANKBARODA.NS",
+    "name": "Bank of Baroda",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CANBK.NS",
+    "name": "Canara Bank",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TRENT.NS",
+    "name": "Trent",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DMART.NS",
+    "name": "Avenue Supermarts",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SIEMENS.NS",
+    "name": "Siemens India",
+    "exchange": "NSE",
+    "typeDisp": "Equity"
+  }
 ]

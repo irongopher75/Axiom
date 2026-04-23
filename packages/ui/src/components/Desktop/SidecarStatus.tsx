@@ -1,40 +1,31 @@
 // packages/ui/src/components/Desktop/SidecarStatus.tsx
-// Small indicator shown in header — only renders when platform === 'desktop'
-// Shows: Python sidecar connected/reconnecting/failed
+// ML Engine sidecar status indicator using pure Tauri
 
 import React, { useState, useEffect } from 'react';
-import { config } from '../../config/api';
+import { useDesktop } from '../../hooks/useDesktop';
 
 export function SidecarStatus() {
   const [status, setStatus] = useState<'ready' | 'starting' | 'failed' | 'crashed'>('starting');
+  const desktop = useDesktop();
 
   useEffect(() => {
-    // Only run on desktop
-    if (!config.isDesktop || !window.axiomDesktop) return;
+    // Initial status check
+    desktop.getSidecarStatus().then(setStatus);
 
-    // Initial check in case we missed the signal
-    fetch(`${config.apiBase}/health`)
-      .then(res => {
-        if (res.ok) setStatus('ready');
-      })
-      .catch(() => {});
-
-    // Listen to window.axiomDesktop.onSidecarStatus
-    const unsubscribe = window.axiomDesktop.onSidecarStatus((s: { status: string }) => {
-      setStatus(s.status as any);
+    // Listen for sidecar ready event
+    const unsubscribe = desktop.onSidecarStatus(() => {
+      setStatus('ready');
     });
 
     return () => unsubscribe();
-  }, []);
-
-  if (!config.isDesktop) return null;
+  }, [desktop]);
 
   const getStatusColor = () => {
     switch (status) {
-      case 'ready': return '#00FF41'; // Green
-      case 'starting': return '#FF9500'; // Amber
+      case 'ready': return '#00FF41';
+      case 'starting': return '#FF9500';
       case 'failed':
-      case 'crashed': return '#FF2244'; // Red
+      case 'crashed': return '#FF2244';
       default: return '#666';
     }
   };
@@ -51,16 +42,16 @@ export function SidecarStatus() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '15px' }}>
-      <div style={{ 
-        width: '8px', 
-        height: '8px', 
-        borderRadius: '50%', 
+      <div style={{
+        width: '8px',
+        height: '8px',
+        borderRadius: '50%',
         background: getStatusColor(),
         boxShadow: status === 'ready' ? '0 0 8px rgba(0, 255, 65, 0.4)' : 'none'
       }} />
-      <span style={{ 
-        fontSize: '9px', 
-        color: '#606058', 
+      <span style={{
+        fontSize: '9px',
+        color: '#606058',
         fontFamily: 'IBM Plex Mono, monospace',
         letterSpacing: '0.5px'
       }}>

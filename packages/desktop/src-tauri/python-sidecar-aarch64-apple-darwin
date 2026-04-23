@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# AXIOM Python Sidecar Wrapper
+# Robust path detection for development and production.
+
+# Find the project root by looking for a unique marker (like .git or package.json)
+SEARCH_DIR="$(cd "$(dirname "$0")" && pwd)"
+while [[ "$SEARCH_DIR" != "/" ]]; do
+    if [[ -f "$SEARCH_DIR/package.json" ]] && grep -q "axiom-monorepo" "$SEARCH_DIR/package.json"; then
+        ROOT_DIR="$SEARCH_DIR"
+        break
+    fi
+    SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+done
+
+if [ -z "$ROOT_DIR" ]; then
+    echo "Error: Could not find project root from $(dirname "$0")"
+    exit 1
+fi
+
+VENV_PATH="$ROOT_DIR/packages/ml-engine/venv"
+PYTHON_BIN="$VENV_PATH/bin/python3"
+MAIN_PY="$ROOT_DIR/packages/ml-engine/src/main.py"
+DATA_DIR="$HOME/Library/Application Support/AXIOM"
+
+mkdir -p "$DATA_DIR"
+
+if [ ! -f "$PYTHON_BIN" ]; then
+    echo "Error: Python environment not found at $PYTHON_BIN"
+    # Fallback to system python if venv is missing
+    PYTHON_BIN=$(which python3)
+fi
+
+export PYTHONPATH="$ROOT_DIR/packages/ml-engine/src"
+exec "$PYTHON_BIN" "$MAIN_PY" --port 18432 --data-dir "$DATA_DIR"

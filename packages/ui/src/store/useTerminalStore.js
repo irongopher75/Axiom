@@ -4,6 +4,11 @@ import { getSessionToken } from "../api";
 import wsClient from "../api/wsClient";
 import { config } from "../config/api";
 
+const EQUITY_FLUSH_INTERVAL_MS = 50;
+let pendingEquityUpdates = new Map();
+let equityFlushTimer = null;
+let wsSubscriptionsBound = false;
+
 // ------------------------------------------------------------------ //
 //  Helpers                                                             //
 // ------------------------------------------------------------------ //
@@ -31,6 +36,66 @@ async function fetchPortfolioMetrics(holdings) {
   return response.json();
 }
 
+function flushEquityUpdates(set) {
+  equityFlushTimer = null;
+  if (pendingEquityUpdates.size === 0) return;
+
+  const queuedEntries = Array.from(pendingEquityUpdates.entries());
+  pendingEquityUpdates.clear();
+
+  set((state) => {
+    let changed = false;
+    const nextPrices = { ...state.equityPrices };
+
+    queuedEntries.forEach(([symbol, payload]) => {
+      const previous = state.equityPrices[symbol];
+      const nextEntry = {
+        price: payload.price,
+        volume: payload.volume,
+        timestamp: payload.timestamp,
+        changePercent: payload.change_pct,
+        up: payload.up,
+        currency: payload.currency || previous?.currency || 'USD'
+      };
+
+      if (
+        previous?.price === nextEntry.price &&
+        previous?.volume === nextEntry.volume &&
+        previous?.timestamp === nextEntry.timestamp &&
+        previous?.changePercent === nextEntry.changePercent &&
+        previous?.up === nextEntry.up &&
+        previous?.currency === nextEntry.currency
+      ) {
+        return;
+      }
+
+      nextPrices[symbol] = nextEntry;
+      changed = true;
+    });
+
+    return changed ? { equityPrices: nextPrices } : state;
+  });
+}
+
+function enqueueEquityUpdate(set, payload) {
+  if (!payload?.symbol) return;
+
+  pendingEquityUpdates.set(payload.symbol, payload);
+  if (equityFlushTimer) return;
+  equityFlushTimer = setTimeout(() => flushEquityUpdates(set), EQUITY_FLUSH_INTERVAL_MS);
+}
+
+function enqueueEquityBatch(set, batch) {
+  batch.forEach((payload) => {
+    if (payload?.symbol) {
+      pendingEquityUpdates.set(payload.symbol, payload);
+    }
+  });
+
+  if (equityFlushTimer) return;
+  equityFlushTimer = setTimeout(() => flushEquityUpdates(set), EQUITY_FLUSH_INTERVAL_MS);
+}
+
 // ------------------------------------------------------------------ //
 //  Store                                                               //
 // ------------------------------------------------------------------ //
@@ -38,12 +103,16 @@ async function fetchPortfolioMetrics(holdings) {
 const useTerminalStore = create((set, get) => ({
   // ---- Core State -------------------------------------------------- //
   activeMode: 'EQUITIES',
-  setActiveMode: (mode) => set({ activeMode: mode }),
+  setActiveMode: (mode) => {
+    console.log('[STORE] setActiveMode called with:', mode);
+    set({ activeMode: mode });
+  },
   activeSymbol: 'AAPL',
   setActiveSymbol: (sym) => set({ activeSymbol: sym }),
   equityPrices: {},
   isLive: false,
   vessels: [],
+  setVessels: (v) => set({ vessels: v }),
   aircraft: [],
   intelFeed: [],
   _connected: false,
@@ -216,32 +285,28 @@ const useTerminalStore = create((set, get) => ({
     // Connect to live WebSocket hub
     wsClient.connect();
 
-    wsClient.on('connection_change', ({ status }) => {
+    if (!wsSubscriptionsBound) {
+      wsSubscriptionsBound = true;
+
+      wsClient.on('connection_change', ({ status }) => {
         set({ isLive: status === 'CONNECTED' });
-    });
+      });
 
-    wsClient.on('SNAPSHOT', (payload) => {
+      wsClient.on('SNAPSHOT', (payload) => {
         set({
-            vessels: payload.vessels || [],
-            aircraft: payload.aircraft || []
+          vessels: payload.vessels || [],
+          aircraft: payload.aircraft || []
         });
-    });
+      });
 
-    wsClient.on('EQUITY', (payload) => {
-        set((state) => ({
-            equityPrices: {
-                ...state.equityPrices,
-                [payload.symbol]: {
-                    price: payload.price,
-                    volume: payload.volume,
-                    timestamp: payload.timestamp,
-                    changePercent: payload.change_pct,
-                    up: payload.up,
-                    currency: payload.currency || state.equityPrices[payload.symbol]?.currency || 'USD'
-                }
-            }
-        }));
-    });
+      wsClient.onBatch('EQUITY', (batch) => {
+        enqueueEquityBatch(set, batch);
+      });
+
+      wsClient.on('EQUITY', (payload) => {
+        enqueueEquityUpdate(set, payload);
+      });
+    }
   },
 
   // ---- Helpers ----------------------------------------------------- //
@@ -258,6 +323,16 @@ const useTerminalStore = create((set, get) => ({
     const data = await response.json();
     set((s) => ({ analysisCache: { ...s.analysisCache, [key]: data } }));
     return data;
+  },
+
+  searchSymbols: async (query) => {
+    try {
+      const res = await api.get(`/api/v1/search?q=${encodeURIComponent(query)}`);
+      return res.data;
+    } catch (e) {
+      console.error('[AXIOM] Search failed:', e);
+      return [];
+    }
   },
 }));
 

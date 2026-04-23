@@ -1,23 +1,30 @@
 // packages/ui/src/config/api.ts
-// Dynamic configuration to handle late injection from Electron
+// Platform configuration for Tauri desktop and web
+import { AXIOM_CONFIG } from './constants';
 
 export const config = {
-  get isDesktop() {
-    return (window as any).axiomDesktop !== undefined || (window as any).__AXIOM_CONFIG__ !== undefined;
+  get isDesktop(): boolean {
+    try {
+      // Tauri v2 detection
+      return typeof (window as any).__TAURI_INTERNALS__ !== 'undefined';
+    } catch {
+      return false;
+    }
   },
-  get apiBase() {
-    return (window as any).__AXIOM_CONFIG__?.apiBase || 'http://localhost:8000';
+  get apiBase(): string {
+    // Desktop uses local Python sidecar, web uses remote backend
+    return this.isDesktop ? AXIOM_CONFIG.DESKTOP.API_BASE : AXIOM_CONFIG.WEB.API_BASE;
   },
-  get wsBase() {
-    return (window as any).__AXIOM_CONFIG__?.wsBase || 'ws://localhost:8000';
+  get wsBase(): string {
+    return this.isDesktop ? AXIOM_CONFIG.DESKTOP.WS_BASE : AXIOM_CONFIG.WEB.WS_BASE;
   },
-  get newsWsUrl() {
-    return (window as any).__AXIOM_CONFIG__?.newsMongoWs || 'wss://news.axiom.app/feed';
+  get newsWsUrl(): string {
+    return (window as any).__AXIOM_CONFIG__?.newsMongoWs || AXIOM_CONFIG.NEWS_WS_URL;
   },
-  get platform() {
-    return (window as any).__AXIOM_CONFIG__?.platform || 'web';
+  get platform(): 'desktop' | 'web' {
+    return this.isDesktop ? 'desktop' : 'web';
   },
-  get version() {
-    return (window as any).__AXIOM_CONFIG__?.version || '0.0.0';
+  get version(): string {
+    return (window as any).__AXIOM_CONFIG__?.version || AXIOM_CONFIG.VERSION;
   }
 };

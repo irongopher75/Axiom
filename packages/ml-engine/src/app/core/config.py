@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False, validation_alias="DEBUG")
     VERSION: str = "3.5-DESKTOP"
     DATA_DIR: str = Field(default="./data", validation_alias="DATA_DIR")
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # Allowed origins are now dynamically generated via allowed_origins_list property
     
     # --- External APIs (Failsafe required in production) ---
     FINNHUB_API_KEY: Optional[str] = Field(default=None, validation_alias="FINNHUB_API_KEY")
@@ -54,6 +54,26 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
     CACHE_TTL_PRICE: int = 300
     CACHE_TTL_FEATURES: int = 900
+
+    # --- Development ---
+    DEV_FRONTEND_URL: str = Field(default="http://localhost:5173", validation_alias="DEV_FRONTEND_URL")
+    DEV_FALLBACK_URL: str = Field(default="http://localhost:3000", validation_alias="DEV_FALLBACK_URL")
+
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        """Build allowed origins from environment + dev defaults."""
+        origins = [
+            "app://.",
+            "app://axiom",
+            self.DEV_FRONTEND_URL,
+            self.DEV_FALLBACK_URL,
+        ]
+        # Add 127.0.0.1 variants
+        for origin in [self.DEV_FRONTEND_URL, self.DEV_FALLBACK_URL]:
+            origin_localhost = origin.replace("localhost", "127.0.0.1")
+            if origin_localhost not in origins:
+                origins.append(origin_localhost)
+        return origins
 
     # --- Email & Notifications ---
     SMTP_HOST: Optional[str] = Field(default=None, validation_alias="SMTP_HOST")

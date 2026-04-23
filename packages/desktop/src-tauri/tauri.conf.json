@@ -1,0 +1,59 @@
+{
+  "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "AXIOM",
+  "version": "1.0.0",
+  "identifier": "com.axiom.terminal",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev:ui --prefix ../..",
+    "beforeBuildCommand": "npm run build:ui:desktop --prefix ../.."
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AXIOM",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "transparent": false,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.cartocdn.com https://*.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' http://localhost:* ws://localhost:* wss://stream.aisstream.io https://basemaps.cartocdn.com https://*.cartocdn.com; worker-src blob:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "app",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "externalBin": [
+      "python-sidecar"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "frameworks": [],
+      "signingIdentity": null,
+      "hardenedRuntime": false
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "endpoints": [
+        "https://github.com/irongopher75/Axiom/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY2QjJDQkNBQzA5MDYwQUUKUldTdVlKREF5c3V5OXRKYWkrMHg1SnhKc2pUbmlMK3FyWGQ4YndLbS85dkoxUnNOaFJibjAvSzkK"
+    }
+  }
+}

@@ -1,7 +1,320 @@
 [
-    {"symbol": "JPM", "name": "JPMorgan Chase & Co.", "exchange": "NYSE", "typeDisp": "Wall Street"},
-    {"symbol": "GS", "name": "Goldman Sachs Group, Inc.", "exchange": "NYSE", "typeDisp": "Wall Street"},
-    {"symbol": "V", "name": "Visa Inc.", "exchange": "NYSE", "typeDisp": "Equity"},
-    {"symbol": "WMT", "name": "Walmart Inc.", "exchange": "NYSE", "typeDisp": "Equity"},
-    {"symbol": "DIS", "name": "The Walt Disney Company", "exchange": "NYSE", "typeDisp": "Wall Street"}
+  {
+    "symbol": "JPM",
+    "name": "JPMorgan Chase",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BAC",
+    "name": "Bank of America",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "WFC",
+    "name": "Wells Fargo",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GS",
+    "name": "Goldman Sachs",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MS",
+    "name": "Morgan Stanley",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "C",
+    "name": "Citigroup",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BX",
+    "name": "Blackstone",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BLK",
+    "name": "BlackRock",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "V",
+    "name": "Visa",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MA",
+    "name": "Mastercard",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AXP",
+    "name": "American Express",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "USB",
+    "name": "US Bancorp",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BRK-B",
+    "name": "Berkshire Hathaway B",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "XOM",
+    "name": "ExxonMobil",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CVX",
+    "name": "Chevron",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "COP",
+    "name": "ConocoPhillips",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SLB",
+    "name": "Schlumberger",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PSX",
+    "name": "Phillips 66",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "VLO",
+    "name": "Valero Energy",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MPC",
+    "name": "Marathon Petroleum",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "JNJ",
+    "name": "Johnson & Johnson",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PFE",
+    "name": "Pfizer",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MRK",
+    "name": "Merck",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ABT",
+    "name": "Abbott Laboratories",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LLY",
+    "name": "Eli Lilly",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BMY",
+    "name": "Bristol-Myers Squibb",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "UNH",
+    "name": "UnitedHealth Group",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CVS",
+    "name": "CVS Health",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "WMT",
+    "name": "Walmart",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HD",
+    "name": "Home Depot",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TGT",
+    "name": "Target",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LOW",
+    "name": "Lowe Companies",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NKE",
+    "name": "Nike",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MCD",
+    "name": "McDonald",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SBUX",
+    "name": "Starbucks",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "YUM",
+    "name": "Yum Brands",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "T",
+    "name": "AT&T",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "VZ",
+    "name": "Verizon",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DIS",
+    "name": "Walt Disney",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CMCSA",
+    "name": "Comcast",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GE",
+    "name": "General Electric",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BA",
+    "name": "Boeing",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "RTX",
+    "name": "Raytheon Technologies",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LMT",
+    "name": "Lockheed Martin",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NOC",
+    "name": "Northrop Grumman",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GD",
+    "name": "General Dynamics",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CAT",
+    "name": "Caterpillar",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DE",
+    "name": "Deere",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MMM",
+    "name": "3M",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HON",
+    "name": "Honeywell",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PG",
+    "name": "Procter & Gamble",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "KO",
+    "name": "Coca-Cola",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PEP",
+    "name": "PepsiCo",
+    "exchange": "NYSE",
+    "typeDisp": "Equity"
+  }
 ]

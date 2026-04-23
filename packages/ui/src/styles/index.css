@@ -1,37 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
     /* AXIOM CORE PALETTE */
     --bg-pure: #000000;
     --bg-panel: #0D0D0D;
+    --bg-panel-glass: rgba(13, 13, 13, 0.7);
     --panel-border: #1A1A1A;
     --panel-border-active: #FF6600;
 
     /* COLOR LANGUAGE - STRICT */
     --axiom-orange: #FF6600;
-    /* Primary Actions, Buy Signals */
+    --axiom-orange-soft: #FF9500;
     --axiom-green: #00FF41;
-    /* Positive, Matrix Green */
     --axiom-red: #FF2244;
-    /* Negative, Sell Signals */
     --axiom-amber: #FFCC00;
-    /* Warnings, Pending */
     --axiom-cyan: #00CCFF;
-    /* Satellite/Geospatial */
     --axiom-secondary: #888888;
-    /* Labels */
+    --axiom-gray-dim: #606058;
 
     /* TYPOGRAPHY */
     --font-data: 'IBM Plex Mono', monospace;
     --font-label: 'IBM Plex Sans Condensed', sans-serif;
+
+    /* EFFECTS */
+    --glass-blur: blur(24px);
+    --glass-blur-strong: blur(32px);
+    --shadow-premium: 0 12px 40px -12px rgba(0, 0, 0, 0.5);
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    border-radius: 0 !important;
-    /* No rounded corners anywhere */
 }
 
 html,
@@ -167,4 +171,52 @@ a[href*="tradingview.com"] {
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
+}
+/* PREMIUM GLASSMORHPISM */
+.glass-card {
+    background: rgba(13, 13, 13, 0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    background: rgba(18, 18, 18, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5);
+}
+
+.premium-blur {
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+}
+
+.transition-premium {
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-scale {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-scale:hover {
+    transform: scale(1.02) translateY(-2px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1A1A1A;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #333;
 }

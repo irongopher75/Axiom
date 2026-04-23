@@ -5,20 +5,79 @@ import MainChart from './MainChart';
 import AiAnalystPanel from './AiAnalystPanel';
 import TradingTerminal from '../dashboard/TradingTerminal';
 import useTerminalStore from '../../store/useTerminalStore';
+import CommandPalette from './CommandPalette';
+import FleetModule from '../modules/FleetModule';
+import SatelliteModule from '../modules/SatelliteModule';
+import FixedIncomeModule from '../modules/FixedIncomeModule';
+import ForexModule from '../modules/ForexModule';
+import CommoditiesModule from '../modules/CommoditiesModule';
+import CryptoModule from '../modules/CryptoModule';
+import AviationModule from '../modules/AviationModule';
+import MacroModule from '../modules/MacroModule';
+import EquitiesModule from '../modules/EquitiesModule';
+import { AXIOM_CONFIG } from '../../config/constants';
 
 /**
  * AxiomTerminal: The primary orchestration component for the terminal view.
- * Built with glassmorphism aesthetics and resizable layout panels.
  */
 const AxiomTerminal = () => {
     const activeSymbol = useTerminalStore(state => state.activeSymbol);
     const activeMode = useTerminalStore(state => state.activeMode);
+    const equityPrices = useTerminalStore(state => state.equityPrices);
     const [showAiPanel, setShowAiPanel] = useState(true);
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+    const currentPrice = equityPrices[activeSymbol]?.price;
+
+    // Global shortcut for Command Palette
+    React.useEffect(() => {
+        const handler = (e) => {
+            if (e.key === '/' && !isPaletteOpen) {
+                const active = document.activeElement;
+                if (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    setIsPaletteOpen(true);
+                }
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isPaletteOpen]);
+
+    const renderMainContent = () => {
+        switch (activeMode) {
+            case 'EQUITIES':
+                return activeSymbol ? <MainChart /> : <EquitiesModule />;
+            case 'FIXED INCOME':
+                return <FixedIncomeModule />;
+            case 'FOREX':
+                return <ForexModule />;
+            case 'COMMODITIES':
+                return <CommoditiesModule />;
+            case 'CRYPTO':
+                return <CryptoModule />;
+            case 'SATELLITE':
+                return <SatelliteModule />;
+            case 'FLEET':
+                return <FleetModule />;
+            case 'AVIATION':
+                return <AviationModule />;
+            case 'MACRO':
+                return <MacroModule />;
+            default:
+                return <MainChart />;
+        }
+    };
 
     return (
         <div className="flex flex-col h-screen w-screen bg-[#000000] text-[#E8E8E0] font-mono overflow-hidden">
             {/* ─── Header ───────────────────────────────────────────────────────────── */}
-            <Header onCommandPalette={() => console.log('Command Palette Triggered')} />
+            <Header onCommandPalette={() => setIsPaletteOpen(true)} />
+
+            {/* ─── Command Palette Modal ────────────────────────────────────────────── */}
+            {isPaletteOpen && (
+                <CommandPalette onClose={() => setIsPaletteOpen(false)} />
+            )}
 
             {/* ─── Main Content Area ────────────────────────────────────────────────── */}
             <div className="flex-1 min-h-0 relative">
@@ -32,10 +91,10 @@ const AxiomTerminal = () => {
                                 <div className="w-2 h-2 rounded-full bg-[#FF6600] shadow-[0_0_8px_#FF6600]" />
                             </div>
                             
-                            <TradingTerminal 
-                                symbol={activeSymbol || 'AAPL'} 
-                                currentPrice={150.00} // Placeholder, will sync with store
-                                onTradeSuccess={() => console.log('Trade Executed Successfully')}
+                            <TradingTerminal
+                                symbol={activeSymbol || 'AAPL'}
+                                currentPrice={currentPrice}
+                                onTradeSuccess={() => {}}
                             />
 
                             <div className="mt-8">
@@ -54,7 +113,7 @@ const AxiomTerminal = () => {
                     {/* ─── Center Body: Main Chart & Visualization ───────────────────── */}
                     <Panel defaultSize={55} minSize={30}>
                         <div className="h-full flex flex-col bg-[#050505]">
-                            <MainChart />
+                            {renderMainContent()}
                         </div>
                     </Panel>
 

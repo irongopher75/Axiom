@@ -68,6 +68,7 @@ class SymbolsManager:
             "BSE": "bse_symbols.json",
             "NASDAQ": "nasdaq_symbols.json",
             "NYSE": "nyse_symbols.json",
+            "TSE": "tse_symbols.json",
         }
         for exchange, filename in exchange_files.items():
             file_path = os.path.join(DATA_DIR, filename)
@@ -153,6 +154,19 @@ class SymbolsManager:
             async with db.execute(sql, params) as cursor:
                 row = await cursor.fetchone()
                 return row[0] if row else 0
+
+    async def list_symbols(
+        self, exchange: str, limit: int = 50, offset: int = 0
+    ) -> list[dict]:
+        """Paginated listing of all symbols for an exchange."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT symbol, name, currency, exchange, type FROM symbols WHERE exchange = ? ORDER BY symbol LIMIT ? OFFSET ?",
+                [exchange, limit, offset],
+            ) as cursor:
+                rows = await cursor.fetchall()
+                return [dict(row) for row in rows]
 
     async def add_symbols_bulk(self, stocks: list[dict]):
         """Bulk add symbols to the database."""

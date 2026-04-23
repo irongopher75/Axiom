@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/api';
+import { AXIOM_CONFIG } from '../config/constants';
 
 export const API_URL = config.apiBase;
 
@@ -10,7 +11,7 @@ const api = axios.create({
     },
 });
 
-const TOKEN_KEY = 'axiom_session_token';
+const TOKEN_KEY = AXIOM_CONFIG.SESSION_TOKEN_KEY;
 
 export const getSessionToken = () => sessionStorage.getItem(TOKEN_KEY);
 export const clearSessionToken = () => sessionStorage.removeItem(TOKEN_KEY);

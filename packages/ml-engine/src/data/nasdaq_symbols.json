@@ -1,7 +1,290 @@
 [
-    {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
-    {"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "typeDisp": "Equity"},
-    {"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
-    {"symbol": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"},
-    {"symbol": "TSLA", "name": "Tesla, Inc.", "exchange": "NASDAQ", "typeDisp": "Equity"}
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft Corp",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corp",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon.com",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc A",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "META",
+    "name": "Meta Platforms",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TSLA",
+    "name": "Tesla",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AVGO",
+    "name": "Broadcom",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AMD",
+    "name": "Advanced Micro Devices",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "INTC",
+    "name": "Intel Corp",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "QCOM",
+    "name": "Qualcomm",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "TXN",
+    "name": "Texas Instruments",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AMAT",
+    "name": "Applied Materials",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MU",
+    "name": "Micron Technology",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LRCX",
+    "name": "Lam Research",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "KLAC",
+    "name": "KLA Corp",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MRVL",
+    "name": "Marvell Technology",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NFLX",
+    "name": "Netflix",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PYPL",
+    "name": "PayPal",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ADBE",
+    "name": "Adobe",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CRM",
+    "name": "Salesforce",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ORCL",
+    "name": "Oracle",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PANW",
+    "name": "Palo Alto Networks",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CRWD",
+    "name": "CrowdStrike",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SNPS",
+    "name": "Synopsys",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "CDNS",
+    "name": "Cadence Design",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ASML",
+    "name": "ASML Holding",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ISRG",
+    "name": "Intuitive Surgical",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AZN",
+    "name": "AstraZeneca",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "GILD",
+    "name": "Gilead Sciences",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BIIB",
+    "name": "Biogen",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "AMGN",
+    "name": "Amgen",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "REGN",
+    "name": "Regeneron Pharma",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MRNA",
+    "name": "Moderna",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "DXCM",
+    "name": "DexCom",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "IDXX",
+    "name": "IDEXX Laboratories",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "SBUX",
+    "name": "Starbucks",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "COST",
+    "name": "Costco Wholesale",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "BKNG",
+    "name": "Booking Holdings",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "ABNB",
+    "name": "Airbnb",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "COIN",
+    "name": "Coinbase",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "HOOD",
+    "name": "Robinhood",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "RIVN",
+    "name": "Rivian",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "LCID",
+    "name": "Lucid Group",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "WBD",
+    "name": "Warner Bros Discovery",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "PARA",
+    "name": "Paramount Global",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "NXPI",
+    "name": "NXP Semiconductors",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  },
+  {
+    "symbol": "MCHP",
+    "name": "Microchip Technology",
+    "exchange": "NASDAQ",
+    "typeDisp": "Equity"
+  }
 ]

@@ -1,56 +1,117 @@
-name: GitHub Release
+name: Release AXIOM
 
 on:
   push:
     tags:
-      - "v*"
-  workflow_dispatch:
+      - 'v*.*.*'   # triggers on v1.0.0, v1.2.3, etc.
 
+# Grant write access to create GitHub Releases
 permissions:
   contents: write
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  release-macos:
-    name: Build And Publish macOS Release
-    runs-on: macos-latest
-    timeout-minutes: 90
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CSC_LINK: ${{ secrets.MAC_CERTS }}
-      CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      AXIOM_NEWS_WS_URL: ${{ secrets.AXIOM_NEWS_WS_URL }}
+  release:
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            rust-target: aarch64-apple-darwin
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            rust-target: x86_64-apple-darwin
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup Node.js
+      # ── Rust ────────────────────────────────────────────────────────────────
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: packages/desktop/src-tauri -> target
+
+      # ── Node / pnpm ─────────────────────────────────────────────────────────
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Node dependencies
+        run: npm install
 
-      - name: Download bundled Python runtime
-        run: npm run setup:python
+      # ── Python sidecar ──────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Build desktop renderer
-        run: npm run build:ui:desktop
+      - name: Install Python sidecar dependencies
+        run: |
+          cd packages/ml-engine
+          python -m venv venv
+          ./venv/bin/pip install --upgrade pip
+          ./venv/bin/pip install -r requirements.txt
 
-      - name: Build Electron main and preload bundles
-        run: npm run build:desktop:main
+      # Tauri requires the sidecar binary to exist at
+      # src-tauri/<name>-<target> before bundling.
+      - name: Build Python sidecar (PyInstaller)
+        run: |
+          cd packages/ml-engine
+          ./venv/bin/pip install pyinstaller
+          ./venv/bin/pyinstaller \
+            --onefile \
+            --name python-sidecar \
+            --paths src \
+            src/main.py
+          # Copy to the Tauri expected location
+          TARGET=${{ matrix.rust-target }}
+          cp dist/python-sidecar \
+            ../desktop/src-tauri/python-sidecar-${TARGET}
+          chmod +x ../desktop/src-tauri/python-sidecar-${TARGET}
 
-      - name: Publish release artifacts to GitHub Releases
-        run: npm run dist --workspace=packages/desktop
+      # ── Build & release ─────────────────────────────────────────────────────
+      - name: Build & publish Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: packages/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AXIOM ${{ github.ref_name }}'
+          releaseBody: |
+            ## AXIOM Institutional Terminal ${{ github.ref_name }}
 
+            ### What's included
+            - 🖥️ Native macOS application (Apple Silicon + Intel)
+            - 📊 Global Equities: NSE, NASDAQ, NYSE, TSE, BSE
+            - 📈 Fixed Income, FX, Commodities, Crypto dashboards
+            - 🛰️ Live AIS vessel tracking (Satellite module)
+            - ✈️ Real-time ADS-B aviation feed
+            - 🤖 Local ML engine — zero cloud dependency
+
+            ### Install
+            1. Download the `.dmg` for your Mac (`aarch64` = Apple Silicon, `x86_64` = Intel)
+            2. Open the `.dmg` and drag AXIOM to Applications
+            3. **First launch**: right-click the app → **Open** → click Open in the dialog
+
+            > macOS will warn this app is from an unidentified developer — this is expected.
+            > Right-click → Open bypasses it permanently.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

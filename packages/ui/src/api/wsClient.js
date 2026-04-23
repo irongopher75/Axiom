@@ -9,9 +9,15 @@ class AxiomWSClient {
     constructor() {
         this.ws = null;
         this.handlers = new Map();
+        this.batchHandlers = new Map();
+        this.messageQueues = new Map();
+        this.batchTimers = new Map();
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.clientId = 'CL-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+        this.batchConfig = new Map([
+            ['EQUITY', { maxItems: 100, waitMs: 50 }],
+        ]);
         
         // Use getWsUrl which now respects central config
         this.url = getWsUrl(this.clientId);
@@ -33,6 +39,12 @@ class AxiomWSClient {
             clearInterval(this.pingInterval);
             this.pingInterval = null;
         }
+    }
+
+    clearBatchState() {
+        this.batchTimers.forEach((timer) => clearTimeout(timer));
+        this.batchTimers.clear();
+        this.messageQueues.clear();
     }
 
     connect() {
@@ -60,9 +72,13 @@ class AxiomWSClient {
             try {
                 const data = JSON.parse(event.data);
                 const { type } = data;
+                const payload = data.payload || data;
+                const batchConfig = this.batchConfig.get(type);
 
-                if (this.handlers.has(type)) {
-                    this.handlers.get(type).forEach(handler => handler(data.payload || data));
+                if (batchConfig) {
+                    this.enqueueBatch(type, payload, batchConfig);
+                } else if (this.handlers.has(type)) {
+                    this.handlers.get(type).forEach(handler => handler(payload));
                 }
             } catch (err) {
                 console.error('[AXIOM-WS] Failed to parse message:', err);
@@ -71,6 +87,7 @@ class AxiomWSClient {
 
         this.ws.onclose = () => {
             this.stopHeartbeat();
+            this.clearBatchState();
             this.emit('connection_change', { status: 'DISCONNECTED' });
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 this.reconnectAttempts++;
@@ -97,6 +114,14 @@ class AxiomWSClient {
         return () => this.off(type, handler);
     }
 
+    onBatch(type, handler) {
+        if (!this.batchHandlers.has(type)) {
+            this.batchHandlers.set(type, new Set());
+        }
+        this.batchHandlers.get(type).add(handler);
+        return () => this.offBatch(type, handler);
+    }
+
     /**
      * Unsubscribe from a specific message type.
      */
@@ -106,10 +131,51 @@ class AxiomWSClient {
         }
     }
 
+    offBatch(type, handler) {
+        if (this.batchHandlers.has(type)) {
+            this.batchHandlers.get(type).delete(handler);
+        }
+    }
+
     emit(type, payload) {
         if (this.handlers.has(type)) {
             this.handlers.get(type).forEach(handler => handler(payload));
         }
+    }
+
+    enqueueBatch(type, payload, config) {
+        const queue = this.messageQueues.get(type) || [];
+        queue.push(payload);
+        this.messageQueues.set(type, queue);
+
+        if (queue.length >= config.maxItems) {
+            this.flushBatch(type);
+            return;
+        }
+
+        if (this.batchTimers.has(type)) return;
+        const timer = setTimeout(() => this.flushBatch(type), config.waitMs);
+        this.batchTimers.set(type, timer);
+    }
+
+    flushBatch(type) {
+        const timer = this.batchTimers.get(type);
+        if (timer) {
+            clearTimeout(timer);
+            this.batchTimers.delete(type);
+        }
+
+        const queued = this.messageQueues.get(type);
+        if (!queued?.length) return;
+
+        this.messageQueues.set(type, []);
+
+        if (this.batchHandlers.has(type)) {
+            this.batchHandlers.get(type).forEach(handler => handler(queued));
+            return;
+        }
+
+        queued.forEach(item => this.emit(type, item));
     }
 
     send(message) {

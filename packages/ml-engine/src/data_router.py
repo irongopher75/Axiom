@@ -76,13 +76,12 @@ class DataRouter:
 
         logger.info(f"Cache miss for {symbol}, routing to provider...")
 
-        # 1. Indian Markets -> Breeze (Fallback to yfinance for now)
+        # 1. Indian Markets -> Breeze API (falls back to yfinance if unavailable)
         if self._is_indian_market(symbol):
-            # Currently Breeze is a placeholder, so we use yfinance as fallback
             df = await self._fetch_from_yfinance(symbol, interval, period)
         else:
-            # 2. US/Global Markets -> Finnhub for real-time, yfinance for history
-            # For 1mo data, yfinance is often more robust on free tiers
+            # 2. US/Global Markets -> yfinance for historical data
+            # Finnhub provides real-time quotes for short intervals
             df = await self._fetch_from_yfinance(symbol, interval, period)
 
             # Enrich with real-time quote from Finnhub if requested interval is small

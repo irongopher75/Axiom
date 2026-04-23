@@ -3,18 +3,9 @@ import useTerminalStore from '../../store/useTerminalStore';
 import { getMe, logout } from '../../api/index';
 import { useNavigate } from 'react-router-dom';
 import { SidecarStatus } from '../Desktop/SidecarStatus';
+import { AXIOM_CONFIG } from '../../config/constants';
 
-const MODES = [
-    { key: 'F1', label: 'EQUITIES' },
-    { key: 'F2', label: 'FIXED INCOME' },
-    { key: 'F3', label: 'FOREX' },
-    { key: 'F4', label: 'COMMODITIES' },
-    { key: 'F5', label: 'CRYPTO' },
-    { key: 'F6', label: 'SATELLITE' },
-    { key: 'F7', label: 'FLEET' },
-    { key: 'F8', label: 'AVIATION' },
-    { key: 'F9', label: 'MACRO' },
-];
+const MODES = AXIOM_CONFIG.MODES;
 
 const Header = ({ onCommandPalette }) => {
     const activeMode = useTerminalStore(state => state.activeMode);
@@ -51,103 +42,96 @@ const Header = ({ onCommandPalette }) => {
     }, []);
 
     return (
-        <div style={{ background: '#0D0D0D', borderBottom: '1px solid #1A1A1A', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div className="flex flex-col flex-shrink-0 bg-[#0D0D0D] border-b border-[#1A1A1A]">
             {/* Top Bar: Logo, Active Symbol, Status */}
-            <div style={{ height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', borderBottom: '1px solid #111' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ color: '#FF6600', fontWeight: 'bold', fontSize: '13px', letterSpacing: '2px', fontFamily: 'IBM Plex Mono' }}>
+            <div className="h-8 flex items-center justify-between px-3 border-b border-[#111]">
+                <div className="flex items-center gap-4">
+                    <div className="text-axiom-orange font-bold text-sm tracking-[0.2em] font-mono">
                         ▸ AXIOM
                     </div>
                     {activeSymbol && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontFamily: 'IBM Plex Mono' }}>
-                            <span style={{ color: '#555' }}>ACTIVE: </span>
-                            <span style={{ color: '#FFF' }}>{activeSymbol}</span>
+                        <div className="flex items-center gap-2 text-[11px] font-mono">
+                            <span className="text-gray-600">ACTIVE:</span>
+                            <span className="text-white font-bold">{activeSymbol}</span>
                             {liveData && liveData.price != null && (
-                                <>
-                                    <span style={{ color: '#FFF', fontSize: '16px' }}>
+                                <div className="flex items-center gap-2 ml-2">
+                                    <span className="text-white text-base">
                                         {currencySign}{Number(liveData.price).toLocaleString()}
                                     </span>
                                     {liveData.changePercent != null && (
-                                        <span style={{ color: liveData.up ? '#00FF41' : '#FF2244', fontSize: '11px' }}>
+                                        <span className={`text-[10px] font-bold ${liveData.up ? 'text-axiom-green' : 'text-axiom-red'}`}>
                                             {liveData.up ? '▲' : '▼'}{Math.abs(liveData.changePercent).toFixed(2)}%
                                         </span>
                                     )}
-                                </>
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px', fontFamily: 'IBM Plex Mono' }}>
-                    <span
+                <div className="flex items-center gap-4 text-[10px] font-mono font-black uppercase tracking-widest">
+                    <button
                         onClick={onCommandPalette}
-                        style={{ color: '#555', cursor: 'pointer', border: '1px solid #1A1A1A', padding: '2px 8px', fontSize: '10px', letterSpacing: '0.05em' }}
+                        className="flex items-center gap-2 text-gray-500 hover:text-white border border-[#1A1A1A] hover:border-axiom-orange/50 px-2 py-0.5 transition-all bg-black/40 rounded-sm"
                         title="Press / to open command palette"
                     >
-                        / CMD
-                    </span>
+                        <span className="text-axiom-orange opacity-60">/</span> CMD
+                    </button>
+                    
                     {isAdmin && (
-                        <span
+                        <button
                             onClick={() => navigate('/admin')}
-                            style={{ color: '#FF6600', cursor: 'pointer', border: '1px solid #FF660033', background: 'rgba(255,102,0,0.1)', padding: '2px 8px', fontSize: '10px', letterSpacing: '0.05em' }}
+                            className="text-axiom-orange border border-axiom-orange/20 bg-axiom-orange/5 px-2 py-0.5 hover:bg-axiom-orange/10 transition-all rounded-sm"
                         >
                             ★ ADMIN
-                        </span>
+                        </button>
                     )}
+                    
                     <SidecarStatus />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{
-                            width: '6px', height: '6px', borderRadius: '50%', display: 'inline-block',
-                            background: isLive ? '#FF6600' : '#333',
-                            boxShadow: isLive ? '0 0 6px #FF6600' : 'none',
-                            animation: isLive ? 'pulse 2s infinite' : 'none'
-                        }} />
-                        <span style={{ color: isLive ? '#00FF41' : '#555' }}>{isLive ? 'CONNECTED' : 'OFFLINE'}</span>
+                    
+                    <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-axiom-green shadow-[0_0_8px_#00FF41] animate-pulse' : 'bg-gray-700'}`} />
+                        <span className={isLive ? 'text-axiom-green' : 'text-gray-600'}>{isLive ? 'CONNECTED' : 'OFFLINE'}</span>
                     </div>
-                    <div style={{ color: '#FFFFFF' }}>{time} IST</div>
-                        <span
+
+                    <div className="text-gray-400">{time} IST</div>
+
+                    <button
                         onClick={async () => {
                             await logout();
                             navigate('/login');
                         }}
-                        style={{ color: '#FF2244', cursor: 'pointer', border: '1px solid #FF224433', padding: '2px 8px', fontSize: '10px', letterSpacing: '0.05em' }}
+                        className="text-axiom-red border border-axiom-red/20 px-2 py-0.5 hover:bg-axiom-red/10 transition-all rounded-sm"
                     >
                         ✖ LOGOUT
-                    </span>
+                    </button>
                 </div>
             </div>
 
             {/* Function Key Bar */}
-            <div style={{ height: '28px', display: 'flex', alignItems: 'center', gap: '2px', padding: '0 4px', overflowX: 'auto' }}>
+            <div className="h-8 flex items-center gap-1 px-1 overflow-x-auto custom-scrollbar bg-black/20">
                 {MODES.map(m => {
                     const isActive = activeMode === m.label;
                     return (
                         <button
                             key={m.key}
-                            onClick={() => setActiveMode(m.label)}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: '4px', padding: '0 10px', height: '24px', border: 'none',
-                                cursor: 'pointer', fontFamily: 'IBM Plex Mono', fontSize: '11px', whiteSpace: 'nowrap',
-                                background: isActive ? '#FF6600' : 'transparent',
-                                color: isActive ? '#000' : '#666',
-                                transition: 'background 0.1s, color 0.1s',
+                            onClick={() => {
+                                console.log('[AXIOM] Switching mode to:', m.label);
+                                setActiveMode(m.label);
                             }}
-                            onMouseEnter={e => { if (!isActive) { e.target.style.color = '#FFF'; e.target.style.background = '#1A1A1A'; } }}
-                            onMouseLeave={e => { if (!isActive) { e.target.style.color = '#666'; e.target.style.background = 'transparent'; } }}
+                            className={`
+                                flex items-center gap-2 px-3 h-6 transition-all font-mono text-[10px] font-bold whitespace-nowrap rounded-sm
+                                ${isActive 
+                                    ? 'bg-axiom-orange text-black shadow-[0_0_12px_rgba(255,102,0,0.2)]' 
+                                    : 'text-gray-500 hover:text-white hover:bg-[#1A1A1A]'}
+                            `}
                         >
-                            <span style={{ fontSize: '9px', opacity: isActive ? 1 : 0.5 }}>{m.key}</span>
+                            <span className={`text-[9px] ${isActive ? 'opacity-100' : 'opacity-40'}`}>{m.key}</span>
                             {m.label}
                         </button>
                     );
                 })}
             </div>
-
-            <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-      `}</style>
         </div>
     );
 };

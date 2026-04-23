@@ -1,22 +1,10 @@
 {
   "name": "axiom-desktop",
-  "version": "1.1.0",
-  "main": "out/main/main.js",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
-  },
-  "dependencies": {
-    "electron-updater": "^6.1.7"
-  },
-  "devDependencies": {
-    "@electron/notarize": "^2.2.1",
-    "electron": "28.2.0",
-    "electron-builder": "^24.9.1",
-    "electron-vite": "^2.0.0",
-    "typescript": "^5.3.3"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
   }
 }
