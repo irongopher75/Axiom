@@ -1,57 +1,88 @@
-# AXIOM Desktop — macOS Application
+# AXIOM · Institutional Terminal
 
-Production-grade, Mac-first, Electron + Python sidecar.
+AXIOM is a high-performance, local-first financial operating system designed for institutional-grade market analysis, trade execution, and real-time intelligence gathering. Built with a **Tauri v2 (Rust)** core and a **Python ML Engine**, it provides a zero-latency, cloud-independent environment for quantitative finance.
 
-## Architecture
+![AXIOM Terminal Interface](https://via.placeholder.com/1200x675/000000/FF6600?text=AXIOM+QUANTITATIVE+INTELLIGENCE+HUB)
 
-- **UI**: React + Vite (Shared with web, adapted for desktop)
-- **Desktop**: Electron (Mac-native chrome, traffic lights, notarized)
-- **ML Engine**: Python FastAPI Sidecar (Bundled runtime, local DuckDB)
+## 🏗️ Architecture
 
-## Setup
+AXIOM follows a **hybrid-local** architecture to ensure maximum privacy, speed, and reliability:
 
-1. **Clone**: Use `git clone` or pull this repo.
-2. **Install**: `npm install`
-3. **Python Runtime**: `npm run setup:python` (Downloads portable Python 3.11 for macOS)
-4. **Dev Mode**:
-   - Terminal 1: `npm run dev:ui` (Vite)
-   - Terminal 2: `npm run dev:desktop` (Electron)
+- **Core**: [Tauri v2](https://v2.tauri.app/) (Rust) — provides a lightweight native macOS container with hardened security.
+- **Frontend**: React + Vite + Deck.gl — an high-frequency UI optimized for financial data visualization.
+- **Intelligence Engine**: Python 3.11 Sidecar — handles heavy data processing, local ML models, and DuckDB aggregation.
+- **Storage**: [DuckDB](https://duckdb.org/) + SQLite — local, analytical databases for lightning-fast multi-million row queries.
 
-## Building & Packaging
+## 📊 Modules (F1 - F9)
 
-```bash
-# Build the desktop renderer
-npm run build:ui:desktop
+AXIOM is organized into specialized intelligence modules, accessible via functional hotkeys:
 
-# Bundle Electron main/preload
-npm run build:desktop:main
+- **F1: EQUITIES** — Global symbol browser (NSE, NASDAQ, NYSE, TSE, BSE) with live batch pricing.
+- **F2: FIXED INCOME** — Yield curve analytics and sovereign debt tracking.
+- **F3: FOREX** — Real-time spot rates and currency volatility heatmaps.
+- **F4: COMMODITIES** — Futures tracking for energy, metals, and softs.
+- **F5: CRYPTO** — Multi-exchange asset tracking with 15s refresh cycles.
+- **F6: SATELLITE** — Live maritime tracking via **AISStream API** integration.
+- **F7: FLEET** — Logistics and supply chain intelligence feed.
+- **F8: AVIATION** — Real-time air traffic monitoring via global ADS-B feeds.
+- **F9: MACRO** — Global economic indicators and central bank policy tracking.
 
-# Package the macOS app
-npm run dist
-```
+## ⚡ Key Features
 
-## GitHub Releases
+- **Local ML**: Run predictive models and sentiment analysis entirely on your machine.
+- **Zero Cloud Dependency**: Your data never leaves your hardware. Local storage handles over 10M records with ease.
+- **Real-Time Data**: Integrated WebSockets for maritime, aviation, and financial markets.
+- **Institutional Aesthetics**: A premium, dark-mode terminal UI built for focus and rapid data ingestion.
 
-AXIOM now includes a GitHub Releases workflow at [.github/workflows/releaser.yml](/Users/vishnupanicker/Documents/GitHub/Axiom/.github/workflows/releaser.yml:1).
+## 🛠️ Quick Start
 
-To publish a release:
+### Prerequisites
+- [Rust](https://rustup.rs/) (stable)
+- [Node.js](https://nodejs.org/) (v20+)
+- [Python 3.11+](https://www.python.org/)
 
-1. Bump the desktop version in [packages/desktop/package.json](/Users/vishnupanicker/Documents/GitHub/Axiom/packages/desktop/package.json:1).
-2. Push a tag like `v1.0.1`.
-3. GitHub Actions will build the macOS artifacts and publish them to the repository's Releases page.
+### Local Development
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/irongopher75/Axiom.git
+   cd Axiom
+   ```
 
-Recommended repository secrets:
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-- `MAC_CERTS`
-- `MAC_CERTS_PASSWORD`
-- `APPLE_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-- `APPLE_TEAM_ID`
-- `AXIOM_NEWS_WS_URL`
+3. **Initialize the ML Engine**:
+   ```bash
+   cd packages/ml-engine
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-Release note categories are configured in [.github/release.yml](/Users/vishnupanicker/Documents/GitHub/Axiom/.github/release.yml:1).
+4. **Launch the Terminal**:
+   ```bash
+   # From the root directory
+   ./start-axiom.sh
+   ```
 
-## Local Stores
+## 📦 Deployment & Releases
 
-AXIOM stores all local data in `~/Library/Application Support/AXIOM/axiom.duckdb`. 
-News feed requires `AXIOM_NEWS_WS_URL` env variable for cloud access.
+AXIOM uses an automated GitHub Actions pipeline to build signed macOS binaries.
+
+1. **Tag a release**:
+   ```bash
+   git tag v1.3.0
+   git push origin v1.3.0
+   ```
+2. **CI/CD**: The `releaser.yml` workflow will automatically:
+   - Compile the Rust core for `aarch64` (Silicon) and `x86_64` (Intel).
+   - Bundle the Python ML Engine using PyInstaller.
+   - Package the app into a `.dmg` and upload to GitHub Releases.
+
+## 🔒 Security
+AXIOM implements strict Content Security Policies (CSP) and local-first data persistence. Authentication is handled locally via encrypted SQLite storage.
+
+---
+**AXIOM v3.0** · *Quantitative Intelligence Hub*
