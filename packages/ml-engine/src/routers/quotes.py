@@ -212,38 +212,80 @@ async def get_macro_yields():
 
 @router.get("/macro/fx")
 async def get_macro_fx():
-    """Returns F3 Forex rates."""
-    return {
-        "assets": [
-            {"symbol": "USD/INR", "price": 83.4520, "change_pct": 0.12, "up": True},
-            {"symbol": "EUR/USD", "price": 1.0825, "change_pct": -0.05, "up": False},
-            {"symbol": "GBP/USD", "price": 1.2640, "change_pct": 0.08, "up": True},
-            {"symbol": "USD/JPY", "price": 151.25, "change_pct": 0.22, "up": True},
-        ]
-    }
+    """Returns F3 Forex rates using live data."""
+    pairs = {"USDINR=X": "USD/INR", "EURUSD=X": "EUR/USD", "GBPUSD=X": "GBP/USD", "USDJPY=X": "USD/JPY"}
+    tickers = list(pairs.keys())
+    try:
+        data = await asyncio.to_thread(yf.download, tickers, period="2d", interval="1d", progress=False, group_by="ticker")
+        assets = []
+        for ticker, label in pairs.items():
+            if ticker in data.columns.get_level_values(0):
+                latest = data[ticker].dropna().tail(2)
+                if not latest.empty:
+                    price = float(latest["Close"].iloc[-1])
+                    prev = float(latest["Close"].iloc[-2]) if len(latest) > 1 else price
+                    assets.append({
+                        "symbol": label,
+                        "price": round(price, 4),
+                        "change_pct": round(((price - prev) / prev) * 100, 2) if prev else 0.0,
+                        "up": price >= prev
+                    })
+        return {"assets": assets or [
+            {"symbol": "USD/INR", "price": 83.45, "change_pct": 0.0, "up": True},
+            {"symbol": "EUR/USD", "price": 1.08, "change_pct": 0.0, "up": True},
+        ]}
+    except Exception as e:
+        logger.error(f"FX fetch failed: {e}")
+        return {"assets": []}
 
 
 @router.get("/macro/commodities")
 async def get_macro_commodities():
-    """Returns F4 Commodities prices."""
-    return {
-        "assets": [
-            {"symbol": "GOLD", "price": 2324.50, "change_pct": 1.15, "up": True},
-            {"symbol": "SILVER", "price": 27.25, "change_pct": 0.85, "up": True},
-            {"symbol": "CRUDE OIL", "price": 85.12, "change_pct": -1.20, "up": False},
-            {"symbol": "NATURAL GAS", "price": 1.78, "change_pct": -2.40, "up": False},
-        ]
-    }
+    """Returns F4 Commodities prices using live futures data."""
+    symbols = {"GC=F": "GOLD", "SI=F": "SILVER", "CL=F": "CRUDE OIL", "NG=F": "NATURAL GAS"}
+    tickers = list(symbols.keys())
+    try:
+        data = await asyncio.to_thread(yf.download, tickers, period="2d", interval="1d", progress=False, group_by="ticker")
+        assets = []
+        for ticker, label in symbols.items():
+            if ticker in data.columns.get_level_values(0):
+                latest = data[ticker].dropna().tail(2)
+                if not latest.empty:
+                    price = float(latest["Close"].iloc[-1])
+                    prev = float(latest["Close"].iloc[-2]) if len(latest) > 1 else price
+                    assets.append({
+                        "symbol": label,
+                        "price": round(price, 2),
+                        "change_pct": round(((price - prev) / prev) * 100, 2) if prev else 0.0,
+                        "up": price >= prev
+                    })
+        return {"assets": assets}
+    except Exception as e:
+        logger.error(f"Commodities fetch failed: {e}")
+        return {"assets": []}
 
 
 @router.get("/macro/crypto")
 async def get_macro_crypto():
-    """Returns F5 Crypto prices."""
-    return {
-        "assets": [
-            {"symbol": "BTC/USD", "price": 64250.00, "change_pct": -2.45, "up": False},
-            {"symbol": "ETH/USD", "price": 3120.50, "change_pct": -1.10, "up": False},
-            {"symbol": "SOL/USD", "price": 142.25, "change_pct": 5.40, "up": True},
-            {"symbol": "DOGE/USD", "price": 0.1642, "change_pct": 12.50, "up": True},
-        ]
-    }
+    """Returns F5 Crypto prices using live data."""
+    symbols = {"BTC-USD": "BTC/USD", "ETH-USD": "ETH/USD", "SOL-USD": "SOL/USD", "DOGE-USD": "DOGE/USD"}
+    tickers = list(symbols.keys())
+    try:
+        data = await asyncio.to_thread(yf.download, tickers, period="2d", interval="1d", progress=False, group_by="ticker")
+        assets = []
+        for ticker, label in symbols.items():
+            if ticker in data.columns.get_level_values(0):
+                latest = data[ticker].dropna().tail(2)
+                if not latest.empty:
+                    price = float(latest["Close"].iloc[-1])
+                    prev = float(latest["Close"].iloc[-2]) if len(latest) > 1 else price
+                    assets.append({
+                        "symbol": label,
+                        "price": round(price, 2),
+                        "change_pct": round(((price - prev) / prev) * 100, 2) if prev else 0.0,
+                        "up": price >= prev
+                    })
+        return {"assets": assets}
+    except Exception as e:
+        logger.error(f"Crypto fetch failed: {e}")
+        return {"assets": []}

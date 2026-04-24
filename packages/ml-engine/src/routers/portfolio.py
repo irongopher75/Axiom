@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from cachetools import TTLCache
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -51,12 +51,14 @@ FALLBACK_PRICES = {
 # ------------------------------------------------------------------ #
 
 class Holding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     symbol:   str
     quantity: float
     avg_cost: float   # cost per share (used for drawdown reference)
 
 
 class MetricsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     holdings: list[Holding]
 
 

@@ -6,7 +6,7 @@ Wraps the Backtester class and exposes it as an HTTP endpoint.
 from fastapi import APIRouter, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 import logging
 
@@ -37,6 +37,7 @@ FALLBACK_BACKTEST = {
 
 
 class BacktestRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     ticker:         str
     period:         str            = "1y"
     fast_sma:       int            = Field(default=20, ge=2, le=200)

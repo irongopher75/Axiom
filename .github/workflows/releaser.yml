@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
+          - platform: macos-14
             args: '--target aarch64-apple-darwin'
             rust-target: aarch64-apple-darwin
-          - platform: macos-latest
+          - platform: macos-13
             args: '--target x86_64-apple-darwin'
             rust-target: x86_64-apple-darwin
 
@@ -41,7 +41,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: packages/desktop/src-tauri -> target
+          workspaces: packages/desktop/src-tauri
 
       # ── Node / pnpm ─────────────────────────────────────────────────────────
       - name: Setup Node 20
@@ -76,6 +76,7 @@ jobs:
             --onefile \
             --name python-sidecar \
             --paths src \
+            --add-data "src/data/*.json:data" \
             src/main.py
           # Copy to the Tauri expected location
           TARGET=${{ matrix.rust-target }}

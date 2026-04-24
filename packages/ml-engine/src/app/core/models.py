@@ -1,6 +1,5 @@
 import os
 import logging
-import joblib # Already in requirements.txt
 from typing import Optional, Any
 from app.core.config import settings
 
@@ -19,7 +18,7 @@ class ModelManager:
     def load_model(cls, strategy_name: str) -> Optional[Any]:
         """
         Loads a serialized model from the data/models directory.
-        Returns None if model file is missing or corrupted.
+        Returns None if model file is missing, corrupted, or if ML dependencies are missing.
         """
         if strategy_name in cls._MODELS:
             return cls._MODELS[strategy_name]
@@ -31,10 +30,15 @@ class ModelManager:
             return None
 
         try:
+            # Check if ML dependencies are available before loading
+            import joblib
             model = joblib.load(model_path)
             cls._MODELS[strategy_name] = model
             logger.info(f"Successfully loaded ML model: {strategy_name}")
             return model
+        except ImportError:
+            logger.warning(f"ML dependencies (joblib/sklearn) missing. Falling back to HEURISTIC for {strategy_name}.")
+            return None
         except Exception as e:
             logger.error(f"Failed to load model {strategy_name}: {e}")
             return None

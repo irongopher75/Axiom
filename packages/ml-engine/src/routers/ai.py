@@ -9,7 +9,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from cachetools import TTLCache
 from textblob import TextBlob
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import re
 import logging
 
@@ -107,6 +107,7 @@ def _cached_analyze(request: Request, ticker: str) -> dict:
 # ------------------------------------------------------------------ #
 
 class ChatRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     message: str
 
 
