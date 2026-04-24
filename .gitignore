@@ -12,6 +12,8 @@ packages/ui/dist
 
 # Python runtime
 packages/desktop/resources/python-runtime/darwin
+venv/
+**/venv/
 **/__pycache__
 *.pyc
 
