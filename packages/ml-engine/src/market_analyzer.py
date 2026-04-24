@@ -89,10 +89,13 @@ class MarketAnalyzer:
 
         # Robust MultiIndex flattening (handles yfinance 0.2.x structures)
         if isinstance(raw.columns, pd.MultiIndex):
-            if self.ticker in raw.columns.get_level_values(1):
+            if self.ticker in raw.columns.get_level_values(0):
+                raw = raw.xs(self.ticker, axis=1, level=0)
+            elif self.ticker in raw.columns.get_level_values(1):
                 raw = raw.xs(self.ticker, axis=1, level=1)
             else:
-                raw.columns = raw.columns.get_level_values(0)
+                # Fallback: take the last level (usually Price)
+                raw.columns = raw.columns.get_level_values(raw.columns.nlevels - 1)
 
         self._df = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
         self._df.dropna(inplace=True)
