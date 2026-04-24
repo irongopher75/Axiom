@@ -1,13 +1,13 @@
 {
   "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "AXIOM",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "identifier": "com.axiom.terminal",
   "build": {
-    "frontendDist": "../ui/dist",
+    "frontendDist": "../../ui/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev:ui --prefix ../..",
-    "beforeBuildCommand": "npm run build:ui:desktop --prefix ../.."
+    "beforeDevCommand": "npm run dev:ui --prefix ../../..",
+    "beforeBuildCommand": "npm run build:ui:desktop --prefix ../../.."
   },
   "app": {
     "windows": [
