@@ -20,6 +20,7 @@ venv/
 # Local data
 *.duckdb
 *.duckdb.wal
+tmp-data/
 
 # OS
 .DS_Store

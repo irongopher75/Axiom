@@ -2,13 +2,16 @@
 
 AXIOM is a high-performance, local-first financial operating system designed for institutional-grade market analysis, trade execution, and real-time intelligence gathering. Built with a **Tauri v2 (Rust)** core and a **Python ML Engine**, it provides a zero-latency, cloud-independent environment for quantitative finance.
 
+> [!WARNING]
+> **macOS Only**: AXIOM is currently optimized and signed exclusively for macOS (Apple Silicon and Intel). Support for Windows and Linux is not currently planned.
+
 ![AXIOM Terminal Interface](https://via.placeholder.com/1200x675/000000/FF6600?text=AXIOM+QUANTITATIVE+INTELLIGENCE+HUB)
 
 ## 🏗️ Architecture
 
 AXIOM follows a **hybrid-local** architecture to ensure maximum privacy, speed, and reliability:
 
-- **Core**: [Tauri v2](https://v2.tauri.app/) (Rust) — provides a lightweight native macOS container with hardened security.
+- **Core**: [Tauri v2](https://v2.tauri.app/) (Rust) — native macOS container with hardened security. No Electron overhead.
 - **Frontend**: React + Vite + Deck.gl — an high-frequency UI optimized for financial data visualization.
 - **Intelligence Engine**: Python 3.11 Sidecar — handles heavy data processing, local ML models, and DuckDB aggregation.
 - **Storage**: [DuckDB](https://duckdb.org/) + SQLite — local, analytical databases for lightning-fast multi-million row queries.
@@ -73,8 +76,8 @@ AXIOM uses an automated GitHub Actions pipeline to build signed macOS binaries.
 
 1. **Tag a release**:
    ```bash
-   git tag v1.3.0
-   git push origin v1.3.0
+   git tag v0.1.500
+   git push origin v0.1.500
    ```
 2. **CI/CD**: The `releaser.yml` workflow will automatically:
    - Compile the Rust core for `aarch64` (Silicon) and `x86_64` (Intel).
@@ -85,4 +88,4 @@ AXIOM uses an automated GitHub Actions pipeline to build signed macOS binaries.
 AXIOM implements strict Content Security Policies (CSP) and local-first data persistence. Authentication is handled locally via encrypted SQLite storage.
 
 ---
-**AXIOM v3.0** · *Quantitative Intelligence Hub*
+**AXIOM v0.1.500** · *Quantitative Intelligence Hub*

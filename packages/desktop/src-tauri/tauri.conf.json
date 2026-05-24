@@ -29,7 +29,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": "app",
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -53,7 +56,7 @@
       "endpoints": [
         "https://github.com/irongopher75/Axiom/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY2QjJDQkNBQzA5MDYwQUUKUldTdVlKREF5c3V5OXRKYWkrMHg1SnhKc2pUbmlMK3FyWGQ4YndLbS85dkoxUnNOaFJibjAvSzkK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4OTkzMkM2OERBMzg2QkEKUldTNmhxT054aktadUtvWk5XQTV4NndIeCtocXZodXhjbmZDSjN5UVBDdklQSVh0NTdPZVI5YW8K"
     }
   }
 }

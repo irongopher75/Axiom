@@ -1,5 +1,6 @@
 {
   "name": "axiom-monorepo",
+  "version": "0.1.500",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -7,9 +8,9 @@
   "scripts": {
     "dev:ui": "npm run dev --workspace=packages/ui",
     "dev:desktop": "npm run dev --workspace=packages/desktop",
+    "dev:desktop:full": "npm run dev --workspace=packages/desktop",
     "build:ui:desktop": "npm run build --workspace=packages/ui -- --mode desktop",
     "build:desktop": "npm run build --workspace=packages/desktop",
-    "start:desktop": "npm run tauri dev --workspace=packages/desktop",
     "lint:python": "ruff check packages/ml-engine/src",
     "format:python": "ruff format packages/ml-engine/src",
     "test:python": "export PYTHONPATH=$PYTHONPATH:$(pwd)/packages/ml-engine/src && packages/ml-engine/venv/bin/pytest packages/ml-engine/tests",

@@ -10,7 +10,7 @@ export PATH="$HOME/.cargo/bin:$PATH"
 cd "$ROOT_DIR"
 
 echo "=========================================="
-echo "   AXIOM INSTITUTIONAL TERMINAL v3.5     "
+echo "   AXIOM INSTITUTIONAL TERMINAL v0.1.500 "
 echo "=========================================="
 echo "Root: $ROOT_DIR"
 
@@ -43,5 +43,5 @@ sleep 1
 
 # 4. Launch Core
 echo "==> [BOOT] Launching Axiom Terminal (Tauri + Rust)..."
-# We use start:desktop which handles the UI dev server and Rust compilation
-npm run start:desktop
+# We use dev:desktop:full which handles the UI dev server and Rust compilation
+npm run dev:desktop:full

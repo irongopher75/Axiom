@@ -14,9 +14,9 @@ This document provides a simplified inventory of the Axiom project files and a h
 | `packages/ml-engine/src/routers/predict.py` | Market Prediction API | Endpoints for real-time direction forecasts and history. |
 | `packages/ml-engine/src/routers/backtest.py` | Strategy Backtesting API | Logic for running historical simulations on market data. |
 | `packages/ml-engine/src/routers/trades.py` | Paper Trading Manager | CRUD for local portfolio trades and performance metrics. |
-| `packages/desktop/src/main.ts` | Electron Main Process | Controls window lifecycle and manages the Python sidecar. |
-| `packages/desktop/src/preload.ts` | IPC Security Bridge | Defines the selective API exposed to the frontend window. |
-| `packages/desktop/src/updater.ts` | Auto-Update Controller | Integration with electron-updater for GitHub Releases. |
+| `packages/desktop/src-tauri/src/lib.rs` | Tauri Core Logic | Main Rust entry point, sidecar management, and IPC handlers. |
+| `packages/desktop/src-tauri/tauri.conf.json` | Tauri Configuration | Bundle settings, security CSP, and plugin configurations. |
+| `packages/desktop/src-tauri/src/main.rs` | Rust Binary Entry | Minimal entry point that invokes the tauri app builder. |
 | `packages/ui/index.html` | Frontend Entry Point | The shell for the high-performance terminal UI. |
 
 ---
